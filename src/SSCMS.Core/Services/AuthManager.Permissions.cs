@@ -44,7 +44,7 @@ namespace SSCMS.Core.Services
 
             if (await IsSuperAdminAsync())
             {
-                siteIdList = (await _databaseManager.SiteRepository.GetSiteIdListAsync()).ToList();
+                siteIdList = (await _databaseManager.SiteRepository.GetSiteIdsAsync()).ToList();
             }
             else if (await IsSiteAdminAsync())
             {
@@ -63,23 +63,71 @@ namespace SSCMS.Core.Services
             {
                 var dict = await GetSitePermissionDictAsync();
 
-                foreach (var siteId in dict.Keys)
+                foreach (var siteId in dict.Keys.Where(siteId => !siteIdList.Contains(siteId)))
                 {
-                    if (!siteIdList.Contains(siteId))
-                    {
-                        siteIdList.Add(siteId);
-                    }
+                    siteIdList.Add(siteId);
                 }
             }
 
             return siteIdList;
         }
 
+        public async Task<List<int>> GetChannelIdsAsync(int siteId)
+        {
+            if (await IsSiteAdminAsync(siteId))
+            {
+                return await _databaseManager.ChannelRepository.GetChannelIdsAsync(siteId);
+            }
+
+            var siteChannelIdList = new List<int>();
+            var dict = await GetChannelPermissionDictAsync();
+            foreach (var dictKey in dict.Keys)
+            {
+                var kvp = ParsePermissionDictKey(dictKey);
+                if (kvp.Key == siteId)
+                {
+                    var theChannelId = kvp.Value;
+
+                    var channelIdList = await _databaseManager.ChannelRepository.GetChannelIdsAsync(siteId, theChannelId, ScopeType.All);
+
+                    foreach (var channelId in channelIdList)
+                    {
+                        if (!siteChannelIdList.Contains(channelId))
+                        {
+                            siteChannelIdList.Add(channelId);
+                        }
+                    }
+                }
+            }
+
+            return siteChannelIdList;
+        }
+
+        public async Task<List<int>> GetVisibleChannelIdsAsync(List<int> channelIdsWithPermissions)
+        {
+            var visibleChannelIds = new List<int>();
+            foreach (var enabledChannelId in channelIdsWithPermissions)
+            {
+                var enabledChannel = await _databaseManager.ChannelRepository.GetAsync(enabledChannelId);
+                var parentIds = ListUtils.GetIntList(enabledChannel.ParentsPath);
+                foreach (var parentId in parentIds.Where(parentId => !visibleChannelIds.Contains(parentId)))
+                {
+                    visibleChannelIds.Add(parentId);
+                }
+                if (!visibleChannelIds.Contains(enabledChannelId))
+                {
+                    visibleChannelIds.Add(enabledChannelId);
+                }
+            }
+
+            return visibleChannelIds;
+        }
+
         public async Task<List<int>> GetChannelIdsAsync(int siteId, params string[] permissions)
         {
             if (await IsSiteAdminAsync(siteId))
             {
-                return await _databaseManager.ChannelRepository.GetChannelIdListAsync(siteId);
+                return await _databaseManager.ChannelRepository.GetChannelIdsAsync(siteId);
             }
 
             var siteChannelIdList = new List<int>();
@@ -125,7 +173,7 @@ namespace SSCMS.Core.Services
             if (_databaseManager.RoleRepository.IsConsoleAdministrator(roles))
             {
                 appPermissions.AddRange(_permissions
-                    .Where(x => StringUtils.EqualsIgnoreCase(x.Type, AuthTypes.Resources.App))
+                    .Where(x => ListUtils.ContainsIgnoreCase(x.Type, AuthTypes.Resources.App))
                     .Select(permission => permission.Id));
             }
             else if (_databaseManager.RoleRepository.IsSystemAdministrator(roles))
@@ -137,7 +185,7 @@ namespace SSCMS.Core.Services
             }
             else
             {
-                appPermissions = await _databaseManager.PermissionsInRolesRepository.GetAppPermissionListAsync(roles);
+                appPermissions = await _databaseManager.PermissionsInRolesRepository.GetAppPermissionsAsync(roles);
             }
 
             return appPermissions;
@@ -317,8 +365,9 @@ namespace SSCMS.Core.Services
                 foreach (var siteId in siteIdList)
                 {
                     var site = await _databaseManager.SiteRepository.GetAsync(siteId);
+                    var siteType = _settingsManager.GetSiteType(site.SiteType).Id;
                     var sitePermissions = _permissions
-                        .Where(x => StringUtils.EqualsIgnoreCase(x.Type, site.SiteType))
+                        .Where(x => ListUtils.ContainsIgnoreCase(x.Type, siteType))
                         .Select(permission => permission.Id).ToList();
 
                     sitePermissionDict[siteId] = sitePermissions;
@@ -327,7 +376,7 @@ namespace SSCMS.Core.Services
             else
             {
                 var roles = await GetRolesAsync();
-                sitePermissionDict = await _databaseManager.SitePermissionsRepository.GetSitePermissionSortedListAsync(roles);
+                sitePermissionDict = await _databaseManager.SitePermissionsRepository.GetSitePermissionDictionaryAsync(roles);
             }
 
             return sitePermissionDict;
@@ -345,7 +394,7 @@ namespace SSCMS.Core.Services
             if (_databaseManager.RoleRepository.IsSystemAdministrator(roles))
             {
                 var allContentPermissionList = _permissions
-                    .Where(x => StringUtils.EqualsIgnoreCase(x.Type, AuthTypes.Resources.SiteChannel))
+                    .Where(x => ListUtils.ContainsIgnoreCase(x.Type, AuthTypes.Resources.Channel))
                     .Select(permission => permission.Id).ToList();
 
                 var siteIdList = await GetSiteIdsAsync();
@@ -357,7 +406,7 @@ namespace SSCMS.Core.Services
             }
             else
             {
-                channelPermissionDict = await _databaseManager.SitePermissionsRepository.GetChannelPermissionSortedListAsync(roles);
+                channelPermissionDict = await _databaseManager.SitePermissionsRepository.GetChannelPermissionDictionaryAsync(roles);
             }
 
             return channelPermissionDict;
@@ -375,7 +424,7 @@ namespace SSCMS.Core.Services
             if (_databaseManager.RoleRepository.IsSystemAdministrator(roles))
             {
                 var allContentPermissionList = _permissions
-                    .Where(x => StringUtils.EqualsIgnoreCase(x.Type, AuthTypes.Resources.SiteChannel))
+                    .Where(x => ListUtils.ContainsIgnoreCase(x.Type, AuthTypes.Resources.Channel))
                     .Select(permission => permission.Id).ToList();
 
                 var siteIdList = await GetSiteIdsAsync();
@@ -387,7 +436,7 @@ namespace SSCMS.Core.Services
             }
             else
             {
-                contentPermissionDict = await _databaseManager.SitePermissionsRepository.GetContentPermissionSortedListAsync(roles);
+                contentPermissionDict = await _databaseManager.SitePermissionsRepository.GetContentPermissionDictionaryAsync(roles);
             }
 
             return contentPermissionDict;

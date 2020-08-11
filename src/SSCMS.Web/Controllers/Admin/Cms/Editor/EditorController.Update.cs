@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using SSCMS.Core.Utils;
 using SSCMS.Dto;
 using SSCMS.Models;
-using SSCMS.Utils;
 
 namespace SSCMS.Web.Controllers.Admin.Cms.Editor
 {
@@ -15,7 +14,7 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Editor
         {
             if (!await _authManager.HasSitePermissionsAsync(request.SiteId,
                     AuthTypes.SitePermissions.Contents) ||
-                !await _authManager.HasContentPermissionsAsync(request.SiteId, request.ChannelId, AuthTypes.SiteContentPermissions.Edit))
+                !await _authManager.HasContentPermissionsAsync(request.SiteId, request.ChannelId, AuthTypes.ContentPermissions.Edit))
             {
                 return Unauthorized();
             }
@@ -63,9 +62,12 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Editor
             {
                 foreach (var translation in request.Translations)
                 {
-                    await ContentUtility.TranslateAsync(_pathManager, _databaseManager, _pluginManager, site, content.ChannelId, content.Id, translation.TransSiteId, translation.TransChannelId, translation.TransType, _createManager);
+                    await ContentUtility.TranslateAsync(_pathManager, _databaseManager, _pluginManager, site, content.ChannelId, content.Id, translation.TransSiteId, translation.TransChannelId, translation.TransType, _createManager, _authManager.AdminId);
                 }
             }
+
+            await _createManager.CreateContentAsync(request.SiteId, channel.Id, content.Id);
+            await _createManager.TriggerContentChangedEventAsync(request.SiteId, channel.Id);
 
             return new BoolResult
             {

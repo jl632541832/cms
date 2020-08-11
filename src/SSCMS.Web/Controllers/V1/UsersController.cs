@@ -3,8 +3,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using SSCMS.Core.Extensions;
 using SSCMS.Dto;
+using SSCMS.Enums;
+using SSCMS.Extensions;
 using SSCMS.Models;
 using SSCMS.Repositories;
 using SSCMS.Services;
@@ -29,8 +30,9 @@ namespace SSCMS.Web.Controllers.V1
         private readonly IAccessTokenRepository _accessTokenRepository;
         private readonly IUserRepository _userRepository;
         private readonly ILogRepository _logRepository;
+        private readonly IStatRepository _statRepository;
 
-        public UsersController(IAuthManager authManager, IPathManager pathManager, IConfigRepository configRepository, IAccessTokenRepository accessTokenRepository, IUserRepository userRepository, ILogRepository logRepository)
+        public UsersController(IAuthManager authManager, IPathManager pathManager, IConfigRepository configRepository, IAccessTokenRepository accessTokenRepository, IUserRepository userRepository, ILogRepository logRepository, IStatRepository statRepository)
         {
             _authManager = authManager;
             _pathManager = pathManager;
@@ -38,6 +40,7 @@ namespace SSCMS.Web.Controllers.V1
             _accessTokenRepository = accessTokenRepository;
             _userRepository = userRepository;
             _logRepository = logRepository;
+            _statRepository = statRepository;
         }
 
         [HttpPost, Route(Route)]
@@ -56,6 +59,8 @@ namespace SSCMS.Web.Controllers.V1
             {
                 return this.Error(errorMessage);
             }
+
+            await _statRepository.AddCountAsync(StatType.UserRegister);
 
             return user;
         }
@@ -201,7 +206,9 @@ namespace SSCMS.Web.Controllers.V1
             var accessToken = _authManager.AuthenticateUser(user, request.IsPersistent);
 
             await _userRepository.UpdateLastActivityDateAndCountOfLoginAsync(user);
-            await _logRepository.AddUserLogAsync(user, "用户登录", string.Empty);
+
+            await _statRepository.AddCountAsync(StatType.UserLogin);
+            await _logRepository.AddUserLogAsync(user, Constants.ActionsLoginSuccess, string.Empty);
 
             return new LoginResult
             {

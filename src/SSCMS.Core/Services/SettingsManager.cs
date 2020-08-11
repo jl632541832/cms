@@ -1,21 +1,23 @@
-﻿using System.Linq;
+﻿using System;
 using System.Reflection;
-using System.Runtime.Versioning;
-using System.Threading.Tasks;
+using System.Runtime.InteropServices;
 using Datory;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using SSCMS.Core.Utils;
 using SSCMS.Services;
 using SSCMS.Utils;
 
 namespace SSCMS.Core.Services
 {
-    public class SettingsManager : ISettingsManager
+    public partial class SettingsManager : ISettingsManager
     {
+        private readonly IServiceCollection _services;
         private readonly IConfiguration _config;
 
-        public SettingsManager(IConfiguration config, string contentRootPath, string webRootPath, Assembly entryAssembly)
+        public SettingsManager(IServiceCollection services, IConfiguration config, string contentRootPath, string webRootPath, Assembly entryAssembly)
         {
+            _services = services;
             _config = config;
             ContentRootPath = contentRootPath;
             WebRootPath = webRootPath;
@@ -24,23 +26,30 @@ namespace SSCMS.Core.Services
             {
                 Version = entryAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
                     .InformationalVersion;
-
-                if (entryAssembly
-                    .GetCustomAttributes(typeof(TargetFrameworkAttribute), false)
-                    .SingleOrDefault() is TargetFrameworkAttribute targetFrameworkAttribute)
-                {
-                    TargetFramework = targetFrameworkAttribute.FrameworkName;
-                }
+                FrameworkDescription = RuntimeInformation.FrameworkDescription;
+                OSDescription = RuntimeInformation.OSDescription;
+                Containerized = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != null;
+                CPUCores = Environment.ProcessorCount;
             }
         }
 
+        public IServiceProvider BuildServiceProvider()
+        {
+            return _services.BuildServiceProvider();
+        }
+
+        public IConfiguration Configuration { get; set; }
         public string ContentRootPath { get; }
         public string WebRootPath { get; }
         public string Version { get; }
-        public string TargetFramework { get; }
+        public string FrameworkDescription { get; }
+        public string OSDescription { get; }
+        public bool Containerized { get; }
+        public int CPUCores { get; }
         public bool IsNightlyUpdate => _config.GetValue(nameof(IsNightlyUpdate), false);
         public bool IsProtectData => _config.GetValue(nameof(IsProtectData), false);
         public string SecurityKey => _config.GetValue<string>(nameof(SecurityKey));
+        public string ApiHost => _config.GetValue(nameof(ApiHost), "/");
         public DatabaseType DatabaseType => TranslateUtils.ToEnum(IsProtectData ? Decrypt(_config.GetValue<string>("Database:Type")) : _config.GetValue<string>("Database:Type"), DatabaseType.MySql);
         public string DatabaseConnectionString => IsProtectData ? Decrypt(_config.GetValue<string>("Database:ConnectionString")) : _config.GetValue<string>("Database:ConnectionString");
         public IDatabase Database => new Database(DatabaseType, DatabaseConnectionString);
@@ -69,22 +78,6 @@ namespace SSCMS.Core.Services
                 databaseConnectionStringValue = Encrypt(databaseConnectionStringValue, SecurityKey);
                 redisConnectionStringValue = Encrypt(redisConnectionString, SecurityKey);
             }
-
-//            var json = $@"
-//{{
-//  ""IsNightlyUpdate"": {isNightlyUpdate.ToString().ToLower()},
-//  ""IsProtectData"": {isProtectData.ToString().ToLower()},
-//  ""SecurityKey"": ""{SecurityKey}"",
-//  ""Database"": {{
-//    ""Type"": ""{type}"",
-//    ""ConnectionString"": ""{databaseConnectionStringValue}""
-//  }},
-//  ""Redis"": {{
-//    ""ConnectionString"": ""{redisConnectionStringValue}""
-//  }}
-//}}";
-
-//            await FileUtils.WriteTextAsync(path, json.Trim());
 
             InstallUtils.SaveSettings(ContentRootPath, isNightlyUpdate, isProtectData, SecurityKey, type,
                 databaseConnectionStringValue, redisConnectionStringValue);

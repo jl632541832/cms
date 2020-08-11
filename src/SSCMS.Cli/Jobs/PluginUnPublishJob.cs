@@ -29,7 +29,7 @@ namespace SSCMS.Cli.Jobs
 
         public void PrintUsage()
         {
-            Console.WriteLine($"Usage: sscms-cli {CommandName} <pluginId>");
+            Console.WriteLine($"Usage: sscms {CommandName} <pluginId>");
             Console.WriteLine("Summary: unpublishes a plugin. Example plugin id: sscms.hits");
             Console.WriteLine("Options:");
             _options.WriteOptionDescriptions(Console.Out);
@@ -52,13 +52,14 @@ namespace SSCMS.Cli.Jobs
                 return;
             }
 
-            var (success, _, failureMessage) = _apiService.GetStatus();
-            if (!success)
+            var (status, failureMessage) = _apiService.GetStatus();
+            if (status == null)
             {
                 await WriteUtils.PrintErrorAsync(failureMessage);
                 return;
             }
 
+            bool success;
             (success, failureMessage) = _apiService.UnPluginsPublish(context.Extras[0]);
             if (success)
             {

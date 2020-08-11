@@ -55,7 +55,7 @@ namespace SSCMS.Core.Services
 
         public async Task<string> GetIncludeContentAsync(Site site, string file)
         {
-            var filePath = await MapPathAsync(site, AddVirtualToPath(file));
+            var filePath = await ParseSitePathAsync(site, AddVirtualToPath(file));
             return await GetContentByFilePathAsync(filePath);
         }
 
@@ -63,7 +63,7 @@ namespace SSCMS.Core.Services
         {
             try
             {
-                var content = _cacheManager.Get<string>(CacheUtils.GetPathKey(filePath));
+                var content = _cacheManager.Get(CacheUtils.GetPathKey(filePath));
                 if (content != null) return content;
 
                 if (FileUtils.IsFileExists(filePath))
@@ -71,7 +71,7 @@ namespace SSCMS.Core.Services
                     content = await FileUtils.ReadTextAsync(filePath);
                 }
 
-                CacheUtils.SetFileContent(_cacheManager, content, filePath);
+                _cacheManager.AddOrUpdateFileWatcher(filePath, content);
                 return content;
             }
             catch

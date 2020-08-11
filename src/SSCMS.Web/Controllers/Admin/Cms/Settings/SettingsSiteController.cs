@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using Datory.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
@@ -44,7 +43,7 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Settings
 
             var site = await _siteRepository.GetAsync(request.SiteId);
             var styles = new List<InputStyle>();
-            foreach (var style in await _tableStyleRepository.GetSiteStyleListAsync(request.SiteId))
+            foreach (var style in await _tableStyleRepository.GetSiteStylesAsync(request.SiteId))
             {
                 styles.Add(new InputStyle(style));
 
@@ -57,14 +56,17 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Settings
                 else if (style.InputType == InputType.CheckBox || 
                          style.InputType == InputType.SelectMultiple)
                 {
-                    var list = Utilities.GetStringList(site.Get(style.AttributeName,
+                    var list = ListUtils.GetStringList(site.Get(style.AttributeName,
                         string.Empty));
                     site.Set(style.AttributeName, list);
                 }
             }
 
+            var siteUrl = await _pathManager.GetSiteUrlAsync(site, true);
+
             return new GetResult
             {
+                SiteUrl = StringUtils.TrimEndSlash(siteUrl),
                 Site = site,
                 Styles = styles
             };
@@ -79,7 +81,7 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Settings
             }
 
             var site = await _siteRepository.GetAsync(request.SiteId);
-            var styles = await _tableStyleRepository.GetSiteStyleListAsync(request.SiteId);
+            var styles = await _tableStyleRepository.GetSiteStylesAsync(request.SiteId);
 
             foreach (var style in styles)
             {
@@ -106,8 +108,8 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Settings
                 else if (inputType == InputType.CheckBox || 
                     style.InputType == InputType.SelectMultiple)
                 {
-                    var list = request.Get<IEnumerable<object>>(style.AttributeName);
-                    site.Set(style.AttributeName, Utilities.ToString(list));
+                    var list = request.Get<List<object>>(style.AttributeName);
+                    site.Set(style.AttributeName, ListUtils.ToString(list));
                 }
                 else
                 {

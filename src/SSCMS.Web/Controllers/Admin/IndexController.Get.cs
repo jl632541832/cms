@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using SSCMS.Configuration;
-using SSCMS.Core.Extensions;
 using SSCMS.Utils;
 using SSCMS.Web.Controllers.Admin.Settings.Sites;
 
@@ -76,7 +75,7 @@ namespace SSCMS.Web.Controllers.Admin
                     };
                 }
 
-                return this.Error(_local["You do not have a site to manage, please contact the super administrator for assistance"]);
+                //return this.Error(_local["You do not have a site to manage, please contact the super administrator for assistance"]);
             }
 
             var plugins = new List<GetPlugin>();
@@ -92,73 +91,90 @@ namespace SSCMS.Web.Controllers.Admin
                 });
             }
 
-            var allMenus = _pluginManager.GetMenus();
+            var allMenus = _settingsManager.GetMenus();
 
-            var siteType = _pluginManager.GetSiteType(site.SiteType);
             var menus = new List<Menu>();
-            if (await _authManager.HasSitePermissionsAsync(site.Id))
+            var siteType = new SiteType();
+            var siteUrl = string.Empty;
+            var previewUrl = string.Empty;
+            if (site != null)
             {
-                var sitePermissions = await _authManager.GetSitePermissionsAsync(site.Id);
-                var siteMenu = new Menu
+                siteType = _settingsManager.GetSiteType(site.SiteType);
+                if (await _authManager.HasSitePermissionsAsync(site.Id))
                 {
-                    Id = IdSite,
-                    Text = site.SiteName,
-                    Type = siteType.Id,
-                    Children = new List<Menu>(allMenus.Where(x => StringUtils.EqualsIgnoreCase(x.Type, siteType.Id)))
-                };
-
-                var query = new NameValueCollection { { "siteId", site.Id.ToString() } };
-
-                siteMenu.Children = GetChildren(siteMenu, sitePermissions, x =>
-                {
-                    x.Link = PageUtils.AddQueryStringIfNotExists(x.Link, query);
-                    return x;
-                });
-                menus.Add(siteMenu);
-
-                if (siteIdListWithPermissions.Count > 1)
-                {
-                    var switchMenus = new List<Menu>();
-                    var allSiteMenus = new List<Menu>();
-                    var siteIdListLatestAccessed = await _administratorRepository.UpdateSiteIdAsync(admin, site.Id);
-                    var siteIdList = await _siteRepository.GetLatestSiteIdListAsync(siteIdListLatestAccessed, siteIdListWithPermissions);
-                    foreach (var siteId in siteIdList)
+                    var sitePermissions = await _authManager.GetSitePermissionsAsync(site.Id);
+                    var siteMenu = new Menu
                     {
-                        var theSite = await _siteRepository.GetAsync(siteId);
-                        if (theSite == null) continue;
-
-                        allSiteMenus.Add(new Menu
+                        Id = IdSite,
+                        Text = site.SiteName,
+                        Type = new List<string>
                         {
-                            Link = $"{_pathManager.GetAdminUrl()}?siteId={theSite.Id}",
-                            Target = "_top",
-                            Text = theSite.SiteName
+                            siteType.Id
+                        },
+                        Children = new List<Menu>(allMenus.Where(x => ListUtils.ContainsIgnoreCase(x.Type, siteType.Id)))
+                    };
+
+                    var query = new NameValueCollection { { "siteId", site.Id.ToString() } };
+
+                    siteMenu.Children = GetChildren(siteMenu, sitePermissions, x =>
+                    {
+                        x.Link = PageUtils.AddQueryStringIfNotExists(x.Link, query);
+                        return x;
+                    });
+                    menus.Add(siteMenu);
+
+                    if (siteIdListWithPermissions.Count > 1)
+                    {
+                        var switchMenus = new List<Menu>();
+                        var allSiteMenus = new List<Menu>();
+                        var siteIdListLatestAccessed = await _administratorRepository.UpdateSiteIdAsync(admin, site.Id);
+                        var siteIdList = await _siteRepository.GetLatestSiteIdsAsync(siteIdListLatestAccessed, siteIdListWithPermissions);
+                        foreach (var siteId in siteIdList)
+                        {
+                            var theSite = await _siteRepository.GetAsync(siteId);
+                            if (theSite == null) continue;
+
+                            var theSiteType = _settingsManager.GetSiteType(theSite.SiteType);
+                            allSiteMenus.Add(new Menu
+                            {
+                                Id = $"site_switch_{theSite.Id}",
+                                IconClass = theSiteType.IconClass,
+                                Link = $"{_pathManager.GetAdminUrl()}?siteId={theSite.Id}",
+                                Target = "_top",
+                                Text = theSite.SiteName
+                            });
+                        }
+
+                        switchMenus.Add(new Menu
+                        {
+                            Id = "site_switch_all",
+                            IconClass = "ion-clock",
+                            Text = _local["Recently site"],
+                            Children = allSiteMenus.ToArray()
+                        });
+                        switchMenus.Add(new Menu
+                        {
+                            Id = "site_switch_select",
+                            IconClass = "ion-checkmark",
+                            Link = _pathManager.GetAdminUrl(SitesLayerSelectController.Route),
+                            Target = "_layer",
+                            Text = _local["Select site"]
+                        });
+
+                        menus.Add(new Menu
+                        {
+                            Id = "site_switch",
+                            Text = _local["Switch site"],
+                            Children = switchMenus.ToArray()
                         });
                     }
-
-                    switchMenus.Add(new Menu
-                    {
-                        IconClass = "ion-edit",
-                        Link = _pathManager.GetAdminUrl(SitesLayerSelectController.Route),
-                        Target = "_layer",
-                        Text = _local["Select site"]
-                    });
-                    switchMenus.Add(new Menu
-                    {
-                        IconClass = "ion-earth",
-                        Text = _local["Recently site"],
-                        Children = allSiteMenus.ToArray()
-                    });
-
-                    menus.Add(new Menu
-                    {
-                        Text = _local["Switch site"],
-                        Children = switchMenus.ToArray()
-                    });
                 }
+                siteUrl = await _pathManager.GetSiteUrlAsync(site, false);
+                previewUrl = _pathManager.GetPreviewSiteUrl(site.Id);
             }
 
             var appPermissions = await _authManager.GetAppPermissionsAsync();
-            var appMenus = allMenus.Where(x => StringUtils.EqualsIgnoreCase(x.Type, AuthTypes.Resources.App) && _authManager.IsMenuValid(x, appPermissions)).ToList();
+            var appMenus = allMenus.Where(x => ListUtils.ContainsIgnoreCase(x.Type, AuthTypes.Resources.App) && _authManager.IsMenuValid(x, appPermissions)).ToList();
             foreach (var appMenu in appMenus)
             {
                 appMenu.Children = GetChildren(appMenu, appPermissions);
@@ -166,8 +182,6 @@ namespace SSCMS.Web.Controllers.Admin
             menus.AddRange(appMenus);
 
             var config = await _configRepository.GetAsync();
-            var siteUrl = await _pathManager.GetSiteUrlAsync(site, false);
-            var previewUrl = _pathManager.GetLocalSiteUrl(site.Id);
 
             var requestCulture = HttpContext.Features.Get<IRequestCultureFeature>();
             var culture = requestCulture.RequestCulture.UICulture.Name;
@@ -184,7 +198,7 @@ namespace SSCMS.Web.Controllers.Admin
                 Culture = culture,
                 Plugins = plugins,
                 Menus = menus,
-                SiteType = siteType.Id,
+                SiteType = siteType,
                 SiteUrl = siteUrl,
                 PreviewUrl = previewUrl,
                 Local = new Local

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
-using CacheManager.Core;
 using Dapper;
 using Datory;
 using SSCMS.Core.Utils;
@@ -28,12 +27,15 @@ namespace SSCMS.Core.Services
         public IContentTagRepository ContentTagRepository { get; }
         public IDbCacheRepository DbCacheRepository { get; }
         public IErrorLogRepository ErrorLogRepository { get; }
-        public ILibraryFileRepository LibraryFileRepository { get; }
-        public ILibraryGroupRepository LibraryGroupRepository { get; }
-        public ILibraryImageRepository LibraryImageRepository { get; }
-        public ILibraryTextRepository LibraryTextRepository { get; }
-        public ILibraryVideoRepository LibraryVideoRepository { get; }
         public ILogRepository LogRepository { get; }
+        public IMaterialArticleRepository MaterialArticleRepository { get; }
+        public IMaterialAudioRepository MaterialAudioRepository { get; }
+        public IMaterialFileRepository MaterialFileRepository { get; }
+        public IMaterialGroupRepository MaterialGroupRepository { get; }
+        public IMaterialImageRepository MaterialImageRepository { get; }
+        public IMaterialMessageRepository MaterialMessageRepository { get; }
+        public IMaterialMessageItemRepository MaterialMessageItemRepository { get; }
+        public IMaterialVideoRepository MaterialVideoRepository { get; }
         public IPermissionsInRolesRepository PermissionsInRolesRepository { get; }
         public IPluginConfigRepository PluginConfigRepository { get; }
         public IRelatedFieldItemRepository RelatedFieldItemRepository { get; }
@@ -43,14 +45,22 @@ namespace SSCMS.Core.Services
         public ISitePermissionsRepository SitePermissionsRepository { get; }
         public ISiteRepository SiteRepository { get; }
         public ISpecialRepository SpecialRepository { get; }
+        public IStatRepository StatRepository { get; }
         public ITableStyleRepository TableStyleRepository { get; }
         public ITemplateLogRepository TemplateLogRepository { get; }
         public ITemplateRepository TemplateRepository { get; }
         public IUserGroupRepository UserGroupRepository { get; }
         public IUserMenuRepository UserMenuRepository { get; }
         public IUserRepository UserRepository { get; }
+        public IWxAccountRepository WxAccountRepository { get; }
+        public IWxChatRepository WxChatRepository { get; set; }
+        public IWxMenuRepository WxMenuRepository { get; }
+        public IWxReplyKeywordRepository WxReplyKeywordRepository { get; }
+        public IWxReplyMessageRepository WxReplyMessageRepository { get; }
+        public IWxReplyRuleRepository WxReplyRuleRepository { get; }
+        public IWxUserRepository WxUserRepository { get; }
 
-        public DatabaseManager(ISettingsManager settingsManager, IAccessTokenRepository accessTokenRepository, IAdministratorRepository administratorRepository, IAdministratorsInRolesRepository administratorsInRolesRepository, IChannelGroupRepository channelGroupRepository, IChannelRepository channelRepository, IConfigRepository configRepository, IContentCheckRepository contentCheckRepository, IContentGroupRepository contentGroupRepository, IContentRepository contentRepository, IContentTagRepository contentTagRepository, IDbCacheRepository dbCacheRepository, IErrorLogRepository errorLogRepository, ILibraryFileRepository libraryFileRepository, ILibraryGroupRepository libraryGroupRepository, ILibraryImageRepository libraryImageRepository, ILibraryTextRepository libraryTextRepository, ILibraryVideoRepository libraryVideoRepository, ILogRepository logRepository, IPermissionsInRolesRepository permissionsInRolesRepository, IPluginConfigRepository pluginConfigRepository, IRelatedFieldItemRepository relatedFieldItemRepository, IRelatedFieldRepository relatedFieldRepository, IRoleRepository roleRepository, ISiteLogRepository siteLogRepository, ISitePermissionsRepository sitePermissionsRepository, ISiteRepository siteRepository, ISpecialRepository specialRepository, ITableStyleRepository tableStyleRepository, ITemplateLogRepository templateLogRepository, ITemplateRepository templateRepository, IUserGroupRepository userGroupRepository, IUserMenuRepository userMenuRepository, IUserRepository userRepository)
+        public DatabaseManager(ISettingsManager settingsManager, IAccessTokenRepository accessTokenRepository, IAdministratorRepository administratorRepository, IAdministratorsInRolesRepository administratorsInRolesRepository, IChannelGroupRepository channelGroupRepository, IChannelRepository channelRepository, IConfigRepository configRepository, IContentCheckRepository contentCheckRepository, IContentGroupRepository contentGroupRepository, IContentRepository contentRepository, IContentTagRepository contentTagRepository, IDbCacheRepository dbCacheRepository, IErrorLogRepository errorLogRepository, ILogRepository logRepository, IMaterialArticleRepository materialArticleRepository, IMaterialAudioRepository materialAudioRepository, IMaterialFileRepository materialFileRepository, IMaterialGroupRepository materialGroupRepository, IMaterialImageRepository materialImageRepository, IMaterialMessageRepository materialMessageRepository, IMaterialMessageItemRepository materialMessageItemRepository, IMaterialVideoRepository materialVideoRepository, IPermissionsInRolesRepository permissionsInRolesRepository, IPluginConfigRepository pluginConfigRepository, IRelatedFieldItemRepository relatedFieldItemRepository, IRelatedFieldRepository relatedFieldRepository, IRoleRepository roleRepository, ISiteLogRepository siteLogRepository, ISitePermissionsRepository sitePermissionsRepository, ISiteRepository siteRepository, ISpecialRepository specialRepository, IStatRepository statRepository, ITableStyleRepository tableStyleRepository, ITemplateLogRepository templateLogRepository, ITemplateRepository templateRepository, IUserGroupRepository userGroupRepository, IUserMenuRepository userMenuRepository, IUserRepository userRepository, IWxAccountRepository wxAccountRepository, IWxChatRepository wxChatRepository, IWxMenuRepository wxMenuRepository, IWxReplyKeywordRepository wxReplyKeywordRepository, IWxReplyMessageRepository wxReplyMessageRepository, IWxReplyRuleRepository wxReplyRuleRepository, IWxUserRepository wxUserRepository)
         {
             _settingsManager = settingsManager;
             AccessTokenRepository = accessTokenRepository;
@@ -65,12 +75,15 @@ namespace SSCMS.Core.Services
             ContentTagRepository = contentTagRepository;
             DbCacheRepository = dbCacheRepository;
             ErrorLogRepository = errorLogRepository;
-            LibraryFileRepository = libraryFileRepository;
-            LibraryGroupRepository = libraryGroupRepository;
-            LibraryImageRepository = libraryImageRepository;
-            LibraryTextRepository = libraryTextRepository;
-            LibraryVideoRepository = libraryVideoRepository;
             LogRepository = logRepository;
+            MaterialArticleRepository = materialArticleRepository;
+            MaterialAudioRepository = materialAudioRepository;
+            MaterialFileRepository = materialFileRepository;
+            MaterialGroupRepository = materialGroupRepository;
+            MaterialImageRepository = materialImageRepository;
+            MaterialMessageRepository = materialMessageRepository;
+            MaterialMessageItemRepository = materialMessageItemRepository;
+            MaterialVideoRepository = materialVideoRepository;
             PermissionsInRolesRepository = permissionsInRolesRepository;
             PluginConfigRepository = pluginConfigRepository;
             RelatedFieldItemRepository = relatedFieldItemRepository;
@@ -80,12 +93,20 @@ namespace SSCMS.Core.Services
             SitePermissionsRepository = sitePermissionsRepository;
             SiteRepository = siteRepository;
             SpecialRepository = specialRepository;
+            StatRepository = statRepository;
             TableStyleRepository = tableStyleRepository;
             TemplateLogRepository = templateLogRepository;
             TemplateRepository = templateRepository;
             UserGroupRepository = userGroupRepository;
             UserMenuRepository = userMenuRepository;
             UserRepository = userRepository;
+            WxAccountRepository = wxAccountRepository;
+            WxChatRepository = wxChatRepository;
+            WxMenuRepository = wxMenuRepository;
+            WxReplyKeywordRepository = wxReplyKeywordRepository;
+            WxReplyMessageRepository = wxReplyMessageRepository;
+            WxReplyRuleRepository = wxReplyRuleRepository;
+            WxUserRepository = wxUserRepository;
         }
 
         public List<IRepository> GetAllRepositories()
@@ -104,12 +125,15 @@ namespace SSCMS.Core.Services
                 ContentTagRepository,
                 DbCacheRepository,
                 ErrorLogRepository,
-                LibraryFileRepository,
-                LibraryGroupRepository,
-                LibraryImageRepository,
-                LibraryTextRepository,
-                LibraryVideoRepository,
                 LogRepository,
+                MaterialArticleRepository,
+                MaterialAudioRepository,
+                MaterialFileRepository,
+                MaterialGroupRepository,
+                MaterialImageRepository,
+                MaterialMessageRepository,
+                MaterialMessageItemRepository,
+                MaterialVideoRepository,
                 PermissionsInRolesRepository,
                 PluginConfigRepository,
                 RelatedFieldItemRepository,
@@ -119,12 +143,20 @@ namespace SSCMS.Core.Services
                 SitePermissionsRepository,
                 SiteRepository,
                 SpecialRepository,
+                StatRepository,
                 TableStyleRepository,
                 TemplateLogRepository,
                 TemplateRepository,
                 UserGroupRepository,
                 UserMenuRepository,
-                UserRepository
+                UserRepository,
+                WxAccountRepository,
+                WxChatRepository,
+                WxMenuRepository,
+                WxReplyKeywordRepository,
+                WxReplyMessageRepository,
+                WxReplyRuleRepository,
+                WxUserRepository
             };
 
             return list;
@@ -253,7 +285,7 @@ namespace SSCMS.Core.Services
 
         public int GetPageTotalCount(string sqlString)
         {
-            var temp = sqlString.ToLower();
+            var temp = StringUtils.ToLower(sqlString);
             var pos = temp.LastIndexOf("order by", StringComparison.Ordinal);
             if (pos > -1)
                 sqlString = sqlString.Substring(0, pos);
@@ -262,17 +294,14 @@ namespace SSCMS.Core.Services
             //if (!string.IsNullOrEmpty(sortField) && addCustomSortInfo)
             //    SelectCommand += " ORDER BY " + SortField;
 
-            var cmdText = _settingsManager.Database.DatabaseType == DatabaseType.Oracle
-                ? $"SELECT COUNT(*) FROM ({sqlString})"
-                : $"SELECT COUNT(*) FROM ({sqlString}) AS T0";
-            return GetIntResult(cmdText);
+            return GetIntResult($"SELECT COUNT(*) FROM ({sqlString}) AS T0");
         }
 
         public string GetStlPageSqlString(string sqlString, string orderString, int totalCount, int itemsPerPage, int currentPageIndex)
         {
             var retVal = string.Empty;
 
-            var temp = sqlString.ToLower();
+            var temp = StringUtils.ToLower(sqlString);
             var pos = temp.LastIndexOf("order by", StringComparison.Ordinal);
             if (pos > -1)
                 sqlString = sqlString.Substring(0, pos);
@@ -325,15 +354,6 @@ SELECT * FROM (
     ) AS t1 {orderStringReverse} LIMIT {recsToRetrieve}
 ) AS t2 {orderString}";
             }
-            else if (_settingsManager.Database.DatabaseType == DatabaseType.Oracle)
-            {
-                retVal = $@"
-SELECT * FROM (
-    SELECT * FROM (
-        SELECT * FROM ({sqlString}) WHERE ROWNUM <= {itemsPerPage * (currentPageIndex + 1)} {orderString}
-    ) WHERE ROWNUM <= {recsToRetrieve} {orderStringReverse}
-) {orderString}";
-            }
 
             //            if (WebConfigUtils.DatabaseType == DatabaseType.MySql)
             //            {
@@ -359,15 +379,10 @@ SELECT * FROM (
 
         public string GetSelectSqlString(string tableName, int totalNum, string columns, string whereString, string orderByString)
         {
-            return GetSelectSqlString(_settingsManager.Database.ConnectionString, tableName, totalNum, columns, whereString, orderByString);
+            return GetSelectSqlString(tableName, totalNum, columns, whereString, orderByString, string.Empty);
         }
 
-        private string GetSelectSqlString(string connectionString, string tableName, int totalNum, string columns, string whereString, string orderByString)
-        {
-            return GetSelectSqlString(connectionString, tableName, totalNum, columns, whereString, orderByString, string.Empty);
-        }
-
-        private string GetSelectSqlString(string connectionString, string tableName, int totalNum, string columns, string whereString, string orderByString, string joinString)
+        private string GetSelectSqlString(string tableName, int totalNum, string columns, string whereString, string orderByString, string joinString)
         {
             if (!string.IsNullOrEmpty(whereString))
             {
@@ -506,12 +521,6 @@ SELECT * FROM (
                 retVal = limit == 0
                     ? $@"SELECT {columnNames} FROM {tableName} {whereSqlString} {orderSqlString} OFFSET {offset}"
                     : $@"SELECT {columnNames} FROM {tableName} {whereSqlString} {orderSqlString} LIMIT {limit} OFFSET {offset}";
-            }
-            else if (_settingsManager.Database.DatabaseType == DatabaseType.Oracle)
-            {
-                retVal = limit == 0
-                    ? $"SELECT {columnNames} FROM {tableName} {whereSqlString} {orderSqlString} OFFSET {offset} ROWS"
-                    : $"SELECT {columnNames} FROM {tableName} {whereSqlString} {orderSqlString} OFFSET {offset} ROWS FETCH NEXT {limit} ROWS ONLY";
             }
 
             return retVal;

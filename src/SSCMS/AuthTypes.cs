@@ -20,9 +20,15 @@
         public static class Resources
         {
             public const string App = "app";
-            public const string Site = "site";
-            public const string SiteChannel = "site:channel";
-            public const string SiteContent = "site:content";
+            public const string Channel = "channel";
+            public const string Content = "content";
+        }
+
+        public static class SiteTypes
+        {
+            public const string Web = "web";
+            public const string Wx = "wx";
+            public const string Document = "document";
         }
 
         public static class AppPermissions
@@ -46,7 +52,7 @@
             public const string SettingsUsersStyle = "app_settings_usersStyle";
             public const string SettingsUsersConfig = "app_settings_usersConfig";
             public const string SettingsAnalysisAdminLogin = "app_settings_analysisAdminLogin";
-            public const string SettingsAnalysisAdminWork = "app_settings_analysisAdminWork";
+            public const string SettingsAnalysisSiteContent = "app_settings_analysisSiteContent";
             public const string SettingsAnalysisUser = "app_settings_analysisUser";
             public const string SettingsLogsSite = "app_settings_logsSite";
             public const string SettingsLogsAdmin = "app_settings_logsAdmin";
@@ -66,12 +72,13 @@
             public const string Contents = "site_contents";
             public const string Channels = "site_channels";
             public const string ContentsSearch = "site_contentsSearch";
-            public const string ChannelsTranslate = "site_channelsTranslate";
             public const string ContentsCheck = "site_contentsCheck";
-            public const string LibraryText = "site_libraryText";
-            public const string LibraryImage = "site_libraryImage";
-            public const string LibraryVideo = "site_libraryVideo";
-            public const string LibraryFile = "site_libraryFile";
+            public const string MaterialMessage = "site_materialMessage";
+            public const string MaterialImage = "site_materialImage";
+            public const string MaterialVideo = "site_materialVideo";
+            public const string MaterialAudio = "site_materialAudio";
+            public const string MaterialFile = "site_materialFile";
+            public const string ChannelsTranslate = "site_channelsTranslate";
             public const string ContentsRecycle = "site_contentsRecycle";
             public const string Templates = "site_templates";
             public const string Specials = "site_specials";
@@ -95,6 +102,7 @@
             public const string SettingsCreateTrigger = "site_settingsCreateTrigger";
             public const string SettingsUploadImage = "site_settingsUploadImage";
             public const string SettingsUploadVideo = "site_settingsUploadVideo";
+            public const string SettingsUploadAudio = "site_settingsUploadAudio";
             public const string SettingsUploadFile = "site_settingsUploadFile";
             public const string SettingsWaterMark = "site_settingsWaterMark";
             public const string CreateIndex = "site_createIndex";
@@ -104,31 +112,40 @@
             public const string CreateSpecials = "site_createSpecials";
             public const string CreateAll = "site_createAll";
             public const string CreateStatus = "site_createStatus";
+
+            public const string WxAccount = "site_wxAccount";
+            public const string WxReply = "site_wxReply";
+            public const string WxReplyAuto = "site_wxReplyAuto";
+            public const string WxReplyBeAdded = "site_wxReplyBeAdded";
+            public const string WxMenus = "site_wxMenus";
+            public const string WxChat = "site_wxChat";
+            public const string WxUsers = "site_wxUsers";
+            public const string WxSend = "site_wxSend";
         }
 
-        public static class SiteChannelPermissions
+        public static class ChannelPermissions
         {
-            public const string Add = "site_channel_add";
-            public const string Edit = "site_channel_edit";
-            public const string Delete = "site_channel_delete";
-            public const string Translate = "site_channel_translate";
-            public const string Create = "site_channel_create";
+            public const string Add = "channel_add";
+            public const string Edit = "channel_edit";
+            public const string Delete = "channel_delete";
+            public const string Translate = "channel_translate";
+            public const string Create = "channel_create";
         }
 
-        public static class SiteContentPermissions
+        public static class ContentPermissions
         {
-            public const string View = "site_content_view";
-            public const string Add = "site_content_add";
-            public const string Edit = "site_content_edit";
-            public const string Delete = "site_content_delete";
-            public const string Translate = "site_content_translate";
-            public const string Arrange = "site_content_arrange";
-            public const string CheckLevel1 = "site_content_checkLevel1";
-            public const string CheckLevel2 = "site_content_checkLevel2";
-            public const string CheckLevel3 = "site_content_checkLevel3";
-            public const string CheckLevel4 = "site_content_checkLevel4";
-            public const string CheckLevel5 = "site_content_checkLevel5";
-            public const string Create = "site_content_create";
+            public const string View = "content_view";
+            public const string Add = "content_add";
+            public const string Edit = "content_edit";
+            public const string Delete = "content_delete";
+            public const string Translate = "content_translate";
+            public const string Arrange = "content_arrange";
+            public const string CheckLevel1 = "content_checkLevel1";
+            public const string CheckLevel2 = "content_checkLevel2";
+            public const string CheckLevel3 = "content_checkLevel3";
+            public const string CheckLevel4 = "content_checkLevel4";
+            public const string CheckLevel5 = "content_checkLevel5";
+            public const string Create = "content_create";
         }
     }
 }

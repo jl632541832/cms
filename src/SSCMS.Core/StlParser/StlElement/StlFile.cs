@@ -178,29 +178,29 @@ namespace SSCMS.Core.StlParser.StlElement
                 parsedContent = PathUtils.RemoveExtension(PageUtils.GetFileNameFromUrl(fileUrl));
                 if (isLower)
                 {
-                    parsedContent = parsedContent.ToLower();
+                    parsedContent = StringUtils.ToLower(parsedContent);
                 }
                 if (isUpper)
                 {
-                    parsedContent = parsedContent.ToUpper();
+                    parsedContent = StringUtils.ToUpper(parsedContent);
                 }
             }
             else if (isFileType)
             {
-                var filePath = await parseManager.PathManager.MapPathAsync(pageInfo.Site, fileUrl);
+                var filePath = await parseManager.PathManager.ParseSitePathAsync(pageInfo.Site, fileUrl);
                 parsedContent = PathUtils.GetExtension(filePath).Trim('.');
                 if (isLower)
                 {
-                    parsedContent = parsedContent.ToLower();
+                    parsedContent = StringUtils.ToLower(parsedContent);
                 }
                 if (isUpper)
                 {
-                    parsedContent = parsedContent.ToUpper();
+                    parsedContent = StringUtils.ToUpper(parsedContent);
                 }
             }
             else if (isFileSize)
             {
-                var filePath = await parseManager.PathManager.MapPathAsync(pageInfo.Site, fileUrl);
+                var filePath = await parseManager.PathManager.ParseSitePathAsync(pageInfo.Site, fileUrl);
                 parsedContent = FileUtils.GetFileSizeByFilePath(filePath);
             }
             else if (isCount)
@@ -212,10 +212,10 @@ namespace SSCMS.Core.StlParser.StlElement
                 var inputParser = new InputParserManager(parseManager.PathManager);
 
                 parsedContent = contentInfo != null
-                    ? inputParser.GetFileHtmlWithCount(pageInfo.Config, pageInfo.Site, contentInfo.ChannelId,
+                    ? inputParser.GetFileHtmlWithCount(pageInfo.Site, contentInfo.ChannelId,
                         contentInfo.Id, fileUrl, attributes, contextInfo.InnerHtml,
                         contextInfo.IsStlEntity, isLower, isUpper)
-                    : inputParser.GetFileHtmlWithoutCount(pageInfo.Config, pageInfo.Site, fileUrl, attributes,
+                    : inputParser.GetFileHtmlWithoutCount(pageInfo.Site, fileUrl, attributes,
                         contextInfo.InnerHtml, contextInfo.IsStlEntity, isLower, isUpper);
             }
 

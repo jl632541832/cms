@@ -6,13 +6,18 @@ namespace SSCMS.Utils
     {
         public const string ConfigFileName = "sscms.json";
         public const string PackageFileName = "package.json";
+        public const string ReadmeFileName = "README.md";
+        public const string ChangeLogFileName = "CHANGELOG.md";
         public const string PluginConfigFileName = "config.json";
         public const string AdminDirectory = "ss-admin";
         public const string HomeDirectory = "home";
+        public const string WwwrootDirectory = "wwwroot";
         public const string PluginsDirectory = "plugins";
         public const string DefaultLanguage = "en";
         public const string DefaultLocalDbFileName = "database.sqlite";
         public const string EncryptStingIndicator = "0secret0";
+        public const string ActionsLoginSuccess = "LoginSuccess";
+        public const string ActionsLoginFailure = "LoginFailure";
 
         public const int AccessTokenExpireDays = 7;
 
@@ -21,8 +26,9 @@ namespace SSCMS.Utils
         public const string ApiPrefix = "/api";
         public const string ApiAdminPrefix = "/api/admin";
         public const string ApiHomePrefix = "/api/home";
+        public const string ApiWxPrefix = "/api/wx";
         public const string ApiV1Prefix = "/api/v1";
-        public const string ApiStlPrefix = "/api/stl";
+        public const string ApiStlPrefix = "/stl";
         public const string RoutePreview = "preview/{siteId}";
         public const string RoutePreviewChannel = "preview/{siteId}/{channelId}";
         public const string RoutePreviewContent = "preview/{siteId}/{channelId}/{contentId}";
@@ -44,18 +50,14 @@ namespace SSCMS.Utils
         public const string ScopeUsers = "Users";
         public const string ScopeStl = "STL";
 
-        public const string OsUserProfileTypeConfig = "config.json";
-        public const string OsUserProfileTypePlugins = "plugins";
-
         public static DateTime SqlMinValue { get; } = new DateTime(1754, 1, 1, 0, 0, 0, 0);
-
-        public const string AdminLogin = "后台管理员登录";
 
         public static string GetSessionIdCacheKey(int userId)
         {
             return $"SESSION-ID-{userId}";
         }
 
+        public const char Newline = '\n';//换行
         public const string ReturnAndNewline = "\r\n";//回车换行
         public const string Html5Empty = @"<html><head><meta charset=""utf-8""><meta http-equiv=""cache-control"" content=""max-age=0"" /><meta http-equiv=""cache-control"" content=""no-cache"" /><meta http-equiv=""expires"" content=""0"" /><meta http-equiv=""expires"" content=""Tue, 01 Jan 1980 1:00:00 GMT"" /><meta http-equiv=""pragma"" content=""no-cache"" /></head><body></body></html>";
 

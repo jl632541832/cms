@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,5 +10,7 @@ namespace SSCMS.Services
 
         Task<Func<CancellationToken, Task>> DequeueAsync(
             CancellationToken cancellationToken);
+
+        void RunOnceAt(Action job, DateTime dateTime);
     }
 }

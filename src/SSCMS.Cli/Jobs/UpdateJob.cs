@@ -5,7 +5,7 @@ using Mono.Options;
 using Semver;
 using SSCMS.Cli.Abstractions;
 using SSCMS.Cli.Core;
-using SSCMS.Core.Packaging;
+using SSCMS.Core.Plugins;
 using SSCMS.Repositories;
 using SSCMS.Services;
 using SSCMS.Utils;
@@ -58,7 +58,7 @@ namespace SSCMS.Cli.Jobs
 
         public void PrintUsage()
         {
-            Console.WriteLine($"Usage: sscms-cli {CommandName}");
+            Console.WriteLine($"Usage: sscms {CommandName}");
             Console.WriteLine("Summary: update sscms");
             Console.WriteLine("Options:");
             _options.WriteOptionDescriptions(Console.Out);
@@ -105,6 +105,9 @@ namespace SSCMS.Cli.Jobs
             var name = CloudUtils.Dl.GetCmsDownloadName(result.Cms.Version);
             var packagePath = _pathManager.GetPackagesPath(name);
 
+            var offlinePath = PathUtils.Combine(_settingsManager.ContentRootPath, "app_offline.htm");
+            FileUtils.WriteText(offlinePath, "down for maintenance");
+
             foreach (var fileName in DirectoryUtils.GetFileNames(packagePath).Where(fileName =>
                 !StringUtils.EqualsIgnoreCase(fileName, $"{name}.zip") &&
                 !StringUtils.EqualsIgnoreCase(fileName, Constants.ConfigFileName)))
@@ -117,6 +120,8 @@ namespace SSCMS.Cli.Jobs
             {
                 DirectoryUtils.Copy(PathUtils.Combine(packagePath, directoryName), PathUtils.Combine(contentRootPath, directoryName), true);
             }
+
+            FileUtils.DeleteFileIfExists(offlinePath);
 
             await WriteUtils.PrintSuccessAsync($"Congratulations, SS CMS was updated to {result.Cms.Version} successfully!");
         }

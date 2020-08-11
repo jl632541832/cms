@@ -1,12 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using CacheManager.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
-using SSCMS.Core.Extensions;
 using SSCMS.Dto;
+using SSCMS.Extensions;
 using SSCMS.Models;
 using SSCMS.Repositories;
 using SSCMS.Services;
@@ -24,7 +23,7 @@ namespace SSCMS.Web.Controllers.Admin.Settings.Administrators
         private const string RouteRoleId = "settings/administratorsRoleAdd/{roleId:int}";
 
         private readonly ICacheManager<object> _cacheManager;
-        private readonly IPluginManager _pluginManager;
+        private readonly ISettingsManager _settingsManager;
         private readonly IAuthManager _authManager;
         private readonly ISiteRepository _siteRepository;
         private readonly IChannelRepository _channelRepository;
@@ -32,10 +31,10 @@ namespace SSCMS.Web.Controllers.Admin.Settings.Administrators
         private readonly ISitePermissionsRepository _sitePermissionsRepository;
         private readonly IPermissionsInRolesRepository _permissionsInRolesRepository;
 
-        public AdministratorsRoleAddController(ICacheManager<object> cacheManager, IPluginManager pluginManager, IAuthManager authManager, ISiteRepository siteRepository, IChannelRepository channelRepository, IRoleRepository roleRepository, ISitePermissionsRepository sitePermissionsRepository, IPermissionsInRolesRepository permissionsInRolesRepository)
+        public AdministratorsRoleAddController(ICacheManager<object> cacheManager, ISettingsManager settingsManager, IAuthManager authManager, ISiteRepository siteRepository, IChannelRepository channelRepository, IRoleRepository roleRepository, ISitePermissionsRepository sitePermissionsRepository, IPermissionsInRolesRepository permissionsInRolesRepository)
         {
             _cacheManager = cacheManager;
-            _pluginManager = pluginManager;
+            _settingsManager = settingsManager;
             _authManager = authManager;
             _siteRepository = siteRepository;
             _channelRepository = channelRepository;
@@ -60,17 +59,17 @@ namespace SSCMS.Web.Controllers.Admin.Settings.Administrators
             {
                 role = await _roleRepository.GetRoleAsync(request.RoleId);
                 sitePermissionsList =
-                    await _sitePermissionsRepository.GetListAsync(role.RoleName);
+                    await _sitePermissionsRepository.GetAllAsync(role.RoleName);
                 permissionList =
-                    await _permissionsInRolesRepository.GetAppPermissionListAsync(new[] { role.RoleName });
+                    await _permissionsInRolesRepository.GetAppPermissionsAsync(new[] { role.RoleName });
             }
 
             var permissions = new List<Option>();
             var appPermissions = await _authManager.GetAppPermissionsAsync();
 
-            var allPermissions = _pluginManager.GetPermissions();
+            var allPermissions = _settingsManager.GetPermissions();
 
-            var allAppPermissions = allPermissions.Where(x => StringUtils.EqualsIgnoreCase(x.Type, AuthTypes.Resources.App));
+            var allAppPermissions = allPermissions.Where(x => ListUtils.ContainsIgnoreCase(x.Type, AuthTypes.Resources.App));
 
             foreach (var permission in allAppPermissions)
             {
@@ -80,7 +79,7 @@ namespace SSCMS.Web.Controllers.Admin.Settings.Administrators
                     {
                         Name = permission.Id,
                         Text = permission.Text,
-                        Selected = StringUtils.ContainsIgnoreCase(permissionList, permission.Id)
+                        Selected = ListUtils.ContainsIgnoreCase(permissionList, permission.Id)
                     });
                 }
             }
@@ -134,7 +133,7 @@ namespace SSCMS.Web.Controllers.Admin.Settings.Administrators
                 return Unauthorized();
             }
 
-            var allPermissions = _pluginManager.GetPermissions();
+            var allPermissions = _settingsManager.GetPermissions();
             return await GetSitePermissionsObjectAsync(allPermissions, request.RoleId, siteId);
         }
 

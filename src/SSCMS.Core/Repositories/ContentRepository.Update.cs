@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Datory;
 using SSCMS.Core.Utils;
+using SSCMS.Enums;
 using SSCMS.Models;
 using SSCMS.Services;
 
@@ -22,19 +23,29 @@ namespace SSCMS.Core.Repositories
         {
             if (content == null) return;
 
+            var repository = GetRepository(site, channel);
+
             if (site.IsAutoPageInTextEditor)
             {
                 content.Body = ContentUtility.GetAutoPageBody(content.Body,
                     site.AutoPageWordNum);
             }
 
-            content.Taxis = await SyncTaxisAsync(site, channel, content);
+            if (content.Top == false && content.Taxis >= TaxisIsTopStartValue)
+            {
+                content.Taxis = await GetMaxTaxisAsync(site, channel, false) + 1;
+            }
+            else if (content.Top && content.Taxis < TaxisIsTopStartValue)
+            {
+                content.Taxis = await GetMaxTaxisAsync(site, channel, true) + 1;
+            }
 
-            var repository = GetRepository(site, channel);
             await repository.UpdateAsync(content, Q
                 .CachingRemove(GetListKey(repository.TableName, content.SiteId, content.ChannelId))
                 .CachingRemove(GetEntityKey(repository.TableName, content.Id))
             );
+
+            await _statRepository.AddCountAsync(StatType.ContentEdit, content.SiteId);
         }
 
         public async Task SetAutoPageContentToSiteAsync(IOldPluginManager pluginManager,  Site site)

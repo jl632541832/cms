@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Datory.Utils;
 using SSCMS.Core.StlParser.Model;
 using SSCMS.Core.StlParser.Utility;
 using SSCMS.Core.Utils;
@@ -71,9 +70,9 @@ namespace SSCMS.Core.StlParser.StlEntity
                     }
                 }
                 
-                if (attributeName.ToLower().StartsWith("up") && attributeName.IndexOf(".", StringComparison.Ordinal) != -1)
+                if (StringUtils.StartsWithIgnoreCase(attributeName, "up") && attributeName.IndexOf(".", StringComparison.Ordinal) != -1)
                 {
-                    if (attributeName.ToLower().StartsWith("up."))
+                    if (StringUtils.StartsWithIgnoreCase(attributeName, "up."))
                     {
                         upLevel = 1;
                     }
@@ -85,9 +84,9 @@ namespace SSCMS.Core.StlParser.StlEntity
                     topLevel = -1;
                     attributeName = attributeName.Substring(attributeName.IndexOf(".", StringComparison.Ordinal) + 1);
                 }
-                else if (attributeName.ToLower().StartsWith("top") && attributeName.IndexOf(".", StringComparison.Ordinal) != -1)
+                else if (StringUtils.StartsWithIgnoreCase(attributeName, "top") && attributeName.IndexOf(".", StringComparison.Ordinal) != -1)
                 {
-                    if (attributeName.ToLower().StartsWith("top."))
+                    if (StringUtils.StartsWithIgnoreCase(attributeName, "top."))
                     {
                         topLevel = 1;
                     }
@@ -129,7 +128,7 @@ namespace SSCMS.Core.StlParser.StlEntity
 
                     if (!string.IsNullOrEmpty(parsedContent))
                     {
-                        parsedContent = await parseManager.PathManager.ParseNavigationUrlAsync(pageInfo.Site, parsedContent, pageInfo.IsLocal);
+                        parsedContent = await parseManager.PathManager.ParseSiteUrlAsync(pageInfo.Site, parsedContent, pageInfo.IsLocal);
                     }
                 }
                 else if (StringUtils.EqualsIgnoreCase(AddDate, attributeName))//栏目添加日期
@@ -142,7 +141,7 @@ namespace SSCMS.Core.StlParser.StlEntity
                 }
                 else if (StringUtils.EqualsIgnoreCase(Group, attributeName))//栏目组别
                 {
-                    parsedContent = Utilities.ToString(nodeInfo.GroupNames);
+                    parsedContent = ListUtils.ToString(nodeInfo.GroupNames);
                 }
                 else if (StringUtils.StartsWithIgnoreCase(attributeName, StlParserUtility.ItemIndex) && contextInfo.ItemContainer?.ChannelItem != null)
                 {
@@ -169,13 +168,13 @@ namespace SSCMS.Core.StlParser.StlEntity
                         {
                             if (InputTypeUtils.EqualsAny(styleInfo.InputType, InputType.Image, InputType.File))
                             {
-                                parsedContent = await parseManager.PathManager.ParseNavigationUrlAsync(pageInfo.Site, parsedContent, pageInfo.IsLocal);
+                                parsedContent = await parseManager.PathManager.ParseSiteUrlAsync(pageInfo.Site, parsedContent, pageInfo.IsLocal);
                             }
                             else
                             {
                                 var inputParser = new InputParserManager(parseManager.PathManager);
 
-                                parsedContent = await inputParser.GetContentByTableStyleAsync(parsedContent, null, pageInfo.Config, pageInfo.Site, styleInfo, string.Empty, null, string.Empty, true);
+                                parsedContent = await inputParser.GetContentByTableStyleAsync(parsedContent, null, pageInfo.Site, styleInfo, string.Empty, null, string.Empty, true);
                             }
                         }
                     }

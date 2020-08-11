@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Datory.Utils;
 using SSCMS.Configuration;
 using SSCMS.Core.Utils;
 using SSCMS.Dto;
@@ -66,7 +65,7 @@ namespace SSCMS.Core.Repositories
                     .FirstOrDefault();
         }
 
-        public async Task<List<string>> GetIndexNameListAsync(int siteId)
+        public async Task<List<string>> GetIndexNamesAsync(int siteId)
         {
             var summaries = await GetSummariesAsync(siteId);
             return summaries
@@ -98,13 +97,15 @@ namespace SSCMS.Core.Repositories
             {
                 extra = await func(summary);
             }
+
+            if (extra == null) return null;
+
             var cascade = new Cascade<int>
             {
                 Value = summary.Id,
                 Label = summary.ChannelName,
                 Children = await GetCascadeChildrenAsync(site, summary.Id, func)
             };
-            if (extra == null) return cascade;
 
             var dict = TranslateUtils.ToDictionary(extra);
             foreach (var o in dict)
@@ -125,7 +126,11 @@ namespace SSCMS.Core.Repositories
                 if (cache == null) continue;
                 if (cache.ParentId == parentId)
                 {
-                    list.Add(await GetCascadeAsync(site, cache, func));
+                    var cascade = await GetCascadeAsync(site, cache, func);
+                    if (cascade != null)
+                    {
+                        list.Add(cascade);
+                    }
                 }
             }
 
@@ -235,7 +240,7 @@ namespace SSCMS.Core.Repositories
                 }
                 else
                 {
-                    channel = summaries.FirstOrDefault(x => (x.ParentId == parentId || Utilities.GetIntList(x.ParentsPath).Contains(parentId)) && x.ChannelName == channelName);
+                    channel = summaries.FirstOrDefault(x => (x.ParentId == parentId || ListUtils.Contains(x.ParentsPath, parentId)) && x.ChannelName == channelName);
 
                     //                    sqlString = $@"SELECT Id
                     //FROM siteserver_Channel 
@@ -257,7 +262,7 @@ namespace SSCMS.Core.Repositories
             return channel?.Id ?? 0;
         }
 
-        public async Task<List<Channel>> GetChannelListAsync(int siteId)
+        public async Task<List<Channel>> GetChannelsAsync(int siteId)
         {
             var summaries = await GetSummariesAsync(siteId);
             var list = new List<Channel>();
@@ -270,13 +275,13 @@ namespace SSCMS.Core.Repositories
             return list;
         }
 
-        public async Task<List<int>> GetChannelIdListAsync(int siteId)
+        public async Task<List<int>> GetChannelIdsAsync(int siteId)
         {
             var summaries = await GetSummariesAsync(siteId);
             return summaries.OrderBy(c => c.Taxis).Select(x => x.Id).ToList();
         }
 
-        public async Task<List<string>> GetChannelIndexNameListAsync(int siteId)
+        public async Task<List<string>> GetChannelIndexNamesAsync(int siteId)
         {
             var summaries = await GetSummariesAsync(siteId);
             return summaries.OrderBy(c => c.Taxis).Where(channelInfo => !string.IsNullOrEmpty(channelInfo.IndexName)).Select(channelInfo => channelInfo.IndexName).ToList();
@@ -284,8 +289,8 @@ namespace SSCMS.Core.Repositories
 
         private void GetParentIdsRecursive(List<ChannelSummary> summaries, List<int> list, int channelId)
         {
-            var summary = summaries.First(x => x.Id == channelId);
-            if (summary.ParentId > 0)
+            var summary = summaries.FirstOrDefault(x => x.Id == channelId);
+            if (summary != null && summary.ParentId > 0)
             {
                 list.Add(summary.ParentId);
                 GetParentIdsRecursive(summaries, list, summary.ParentId);
@@ -370,14 +375,14 @@ namespace SSCMS.Core.Repositories
                 var channelInfo = await GetAsync(channelId);
                 if (!string.IsNullOrEmpty(group))
                 {
-                    if (!StringUtils.ContainsIgnoreCase(channelInfo.GroupNames, group))
+                    if (!ListUtils.ContainsIgnoreCase(channelInfo.GroupNames, group))
                     {
                         continue;
                     }
                 }
                 if (!string.IsNullOrEmpty(groupNot))
                 {
-                    if (StringUtils.ContainsIgnoreCase(channelInfo.GroupNames, groupNot))
+                    if (ListUtils.ContainsIgnoreCase(channelInfo.GroupNames, groupNot))
                     {
                         continue;
                     }
@@ -438,7 +443,7 @@ namespace SSCMS.Core.Repositories
             return retVal;
         }
 
-        private async Task<string> GetParentsPathAsync(int siteId, int channelId)
+        private async Task<string> GetParentsPathAsync(int channelId)
         {
             var retVal = string.Empty;
             var channel = await GetAsync(channelId);
@@ -451,7 +456,7 @@ namespace SSCMS.Core.Repositories
 
         public async Task<int> GetTopLevelAsync(int siteId, int channelId)
         {
-            var parentsPath = await GetParentsPathAsync(siteId, channelId);
+            var parentsPath = await GetParentsPathAsync(channelId);
             return string.IsNullOrEmpty(parentsPath) ? 0 : parentsPath.Split(',').Length;
         }
 
@@ -530,7 +535,7 @@ namespace SSCMS.Core.Repositories
             //    }
             //}
 
-            return Utilities.ToString(channelNames, " > ");
+            return ListUtils.ToString(channelNames, " > ");
         }
 
         public async Task<List<InputStyle>> GetInputStylesAsync(Site site, Channel channel)
@@ -538,7 +543,7 @@ namespace SSCMS.Core.Repositories
             var items = new List<InputStyle>();
 
             var tableName = GetTableName(site, channel);
-            var styleList = ColumnsManager.GetContentListStyles(await _tableStyleRepository.GetContentStyleListAsync(channel, tableName));
+            var styleList = ColumnsManager.GetContentListStyles(await _tableStyleRepository.GetContentStylesAsync(channel, tableName));
 
             foreach (var style in styleList)
             {
@@ -564,7 +569,7 @@ namespace SSCMS.Core.Repositories
             {
                 return false;
             }
-            if (StringUtils.In(channel.ParentsPath, parentId.ToString()))
+            if (ListUtils.Contains(channel.ParentsPath, parentId))
             {
                 return true;
             }
@@ -575,7 +580,7 @@ namespace SSCMS.Core.Repositories
         {
             var options = new List<KeyValuePair<int, string>>();
 
-            var list = await GetChannelIdListAsync(siteId);
+            var list = await GetChannelIdsAsync(siteId);
             foreach (var channelId in list)
             {
                 var enabled = await authManager.HasChannelPermissionsAsync(siteId, channelId, contentPermissions);

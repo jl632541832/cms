@@ -63,8 +63,9 @@
       class="headerless"
       :data="[
         {key: '服务器域名', value: location.host},
-        {key: 'SSCMS 版本', value: version},
-        {key: '.NET 版本', value: targetFramework},
+        {key: 'SSCMS 版本', value: 'SSCMS ' + version},
+        {key: '.NET Core 版本', value: frameworkDescription},
+        {key: 'OS 版本', value: osDescription},
         {key: '系统根目录', value: contentRootPath},
         {key: '网站根目录', value: webRootPath}
       ]"
@@ -265,7 +266,7 @@
         <el-divider></el-divider>
         <p class="el-alert__description" style="font-size: 14px;">
           获取更多使用帮助请访问
-          <el-link :underline="false" type="primary" style="font-size: 14px;" href="https://www.siteserver.cn/docs/" target="_blank">SS CMS 文档中心</el-link>
+          <el-link :underline="false" type="primary" style="font-size: 14px;" :href="cloud.getDocsUrl('')" target="_blank">SS CMS 文档中心</el-link>
         </p>
       </div>
     </div>
@@ -279,6 +280,5 @@
 </el-card>
 
 @section Scripts{
-  <script src="/sitefiles/assets/js/cloud.js" type="text/javascript"></script>
   <script src="/sitefiles/assets/js/admin/install.js" type="text/javascript"></script>
 }

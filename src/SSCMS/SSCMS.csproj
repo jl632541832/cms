@@ -4,7 +4,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <LangVersion>latest</LangVersion>
     <PackageId>SSCMS</PackageId>
-    <Version>7.0.0-preview6</Version>
+    <Version>7.0.0</Version>
     <Authors>SiteServer CMS</Authors>
     <Company>SiteServer CMS</Company>
     <PackageDescription>SSCMS .NET Core abstractions for developers.</PackageDescription>
@@ -15,7 +15,7 @@
     <PackageTags>SSCMS;SiteServer;CMS;Plugin</PackageTags>
     <PackageIcon>logo.png</PackageIcon>
     <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,8 +24,8 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Datory" Version="1.0.18" />
-    <PackageReference Include="HtmlSanitizer" Version="5.0.310" />
+    <PackageReference Include="Datory" Version="1.0.21" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="1.0.0-rc0003" />
     <PackageReference Include="SharpZipLib" Version="1.2.0" />
   </ItemGroup>
 

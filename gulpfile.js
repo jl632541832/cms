@@ -11,7 +11,7 @@ const runSequence = require('gulp4-run-sequence');
 
 var os = '';
 
-const version = process.env.PRODUCTVERSION;
+const version = process.env.PRODUCTVERSION ? (process.env.PRODUCTVERSION + '-') : '';
 const timestamp = (new Date()).getTime();
 let publishDir = '';
 let htmlDict = {};
@@ -139,7 +139,7 @@ gulp.task('build-clean', function(){
 
 gulp.task("build-osx-x64", async function () {
   os = 'osx-x64';
-  console.log("build version: " + version + "-" + os);
+  console.log("build version: " + version + os);
   return runSequence(
       "build-src",
       "build-os",
@@ -152,7 +152,7 @@ gulp.task("build-osx-x64", async function () {
 
 gulp.task("build-linux-x64", async function () {
   os = 'linux-x64';
-  console.log("build version: " + version + "-" + os);
+  console.log("build version: " + version + os);
   return runSequence(
       "build-src",
       "build-os",
@@ -165,7 +165,7 @@ gulp.task("build-linux-x64", async function () {
 
 gulp.task("build-win-x64", async function () {
   os = 'win-x64';
-  console.log("build version: " + version + "-" + os);
+  console.log("build version: " + version + os);
   return runSequence(
       "build-src",
       "build-os",
@@ -178,7 +178,7 @@ gulp.task("build-win-x64", async function () {
 
 gulp.task("build-win-x86", async function () {
   os = 'win-x86';
-  console.log("build version: " + version + "-" + os);
+  console.log("build version: " + version + os);
   return runSequence(
       "build-src",
       "build-os",
@@ -195,27 +195,28 @@ gulp.task("copy-files", async function () {
   fs.copySync('./appsettings.json', publishDir + '/appsettings.json');
   fs.copySync('./sscms.json', publishDir + '/sscms.json');
   fs.copySync('./web.config', publishDir + '/web.config');
-  fs.copySync('./src/SSCMS.Web/assets', publishDir + '/wwwroot/sitefiles/assets');
   fs.copySync('./404.html', publishDir + '/wwwroot/404.html');
   fs.copySync('./favicon.ico', publishDir + '/wwwroot/favicon.ico');
   fs.copySync('./index.html', publishDir + '/wwwroot/index.html');
+  fs.removeSync(publishDir + '/appsettings.Development.json');
 });
 
 gulp.task("copy-sscms-linux", async function () {
-  fs.copySync(publishDir + '/SSCMS.Web', publishDir + '/sscms');
-  fs.removeSync(publishDir + '/SSCMS.Web.pdb');
-  fs.removeSync(publishDir + '/SSCMS.Web');
+  fs.copySync(publishDir + '/SSCMS.Cli', publishDir + '/sscms');
+  fs.removeSync(publishDir + '/SSCMS.Cli.pdb');
+  fs.removeSync(publishDir + '/SSCMS.Cli');
+  fs.removeSync(publishDir + '/web.config');
 });
 
 gulp.task("copy-sscms-win", async function () {
-  fs.copySync(publishDir + '/SSCMS.Web.exe', publishDir + '/sscms.exe');
-  fs.removeSync(publishDir + '/SSCMS.Web.pdb');
-  fs.removeSync(publishDir + '/SSCMS.Web.exe');
+  fs.copySync(publishDir + '/SSCMS.Cli.exe', publishDir + '/sscms.exe');
+  fs.removeSync(publishDir + '/SSCMS.Cli.pdb');
+  fs.removeSync(publishDir + '/SSCMS.Cli.exe');
 });
 
 gulp.task("copy-css", function () {
   return gulp
-    .src(["./src/SSCMS.Web/assets/**/*.css"])
+    .src(["./src/SSCMS.Web/wwwroot/sitefiles/**/*.css"])
     .pipe(
       minifier({
         minify: true,
@@ -227,23 +228,24 @@ gulp.task("copy-css", function () {
         ignoreFiles: ['.min.css']
       })
     )
-    .pipe(gulp.dest(publishDir + "/wwwroot/sitefiles/assets"));
+    .pipe(gulp.dest(publishDir + "/wwwroot/sitefiles"));
 });
 
 gulp.task("copy-js", function () {
   const f = filter(['**/*-min.js']);
   return gulp
-    .src(["./src/SSCMS.Web/assets/**/*.js"])
+    .src(["./src/SSCMS.Web/wwwroot/sitefiles/**/*.js"])
     .pipe(minify())
     .pipe(f)
     .pipe(rename(function (path) {
       path.basename = path.basename.substring(0, path.basename.length - 4);
     }))
-    .pipe(gulp.dest(publishDir + "/wwwroot/sitefiles/assets"));
+    .pipe(gulp.dest(publishDir + "/wwwroot/sitefiles"));
 });
 
 gulp.task("copy-osx-x64", async function (callback) {
-  publishDir = './publish/sscms-' + version + '-osx-x64';
+  os = 'osx-x64';
+  publishDir = './publish/sscms-' + version + os;
   console.log("publish dir: " + publishDir);
 
   return runSequence(
@@ -255,7 +257,8 @@ gulp.task("copy-osx-x64", async function (callback) {
 });
 
 gulp.task("copy-linux-x64", async function (callback) {
-  publishDir = './publish/sscms-' + version + '-linux-x64';
+  os = 'linux-x64';
+  publishDir = './publish/sscms-' + version + os;
   console.log("publish dir: " + publishDir);
 
   return runSequence(
@@ -267,7 +270,8 @@ gulp.task("copy-linux-x64", async function (callback) {
 });
 
 gulp.task("copy-win-x64", async function (callback) {
-  publishDir = './publish/sscms-' + version + '-win-x64';
+  os = 'win-x64';
+  publishDir = './publish/sscms-' + version + os;
   console.log("publish dir: " + publishDir);
 
   return runSequence(
@@ -279,7 +283,8 @@ gulp.task("copy-win-x64", async function (callback) {
 });
 
 gulp.task("copy-win-x86", async function (callback) {
-  publishDir = './publish/sscms-' + version + '-win-x86';
+  os = 'win-x86';
+  publishDir = './publish/sscms-' + version + os;
   console.log("publish dir: " + publishDir);
 
   return runSequence(

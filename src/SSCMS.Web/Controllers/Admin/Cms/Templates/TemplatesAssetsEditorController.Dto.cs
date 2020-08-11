@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using SSCMS.Core.Extensions;
+using SSCMS.Extensions;
 using SSCMS.Models;
 using SSCMS.Utils;
 
@@ -41,15 +41,15 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Templates
         private async Task<ActionResult<ContentResult>> SaveFile(ContentRequest request, Site site, bool isAdd)
         {
             var filePath = string.Empty;
-            if (StringUtils.EqualsIgnoreCase(request.ExtName, ".html"))
+            if (StringUtils.EqualsIgnoreCase(request.ExtName, "html"))
             {
                 filePath = await _pathManager.GetSitePathAsync(site, site.TemplatesAssetsIncludeDir, request.Path + ".html");
             }
-            else if (StringUtils.EqualsIgnoreCase(request.ExtName, ".css"))
+            else if (StringUtils.EqualsIgnoreCase(request.ExtName, "css"))
             {
                 filePath = await _pathManager.GetSitePathAsync(site, site.TemplatesAssetsCssDir, request.Path + ".css");
             }
-            else if (StringUtils.EqualsIgnoreCase(request.ExtName, ".js"))
+            else if (StringUtils.EqualsIgnoreCase(request.ExtName, "js"))
             {
                 filePath = await _pathManager.GetSitePathAsync(site, site.TemplatesAssetsJsDir, request.Path + ".js");
             }

@@ -47,7 +47,7 @@ namespace SSCMS.Cli.Jobs
 
         public void PrintUsage()
         {
-            Console.WriteLine($"Usage: sscms-cli {CommandName}");
+            Console.WriteLine($"Usage: sscms {CommandName}");
             Console.WriteLine("Summary: install sscms");
             Console.WriteLine("Options:");
             _options.WriteOptionDescriptions(Console.Out);
@@ -101,7 +101,7 @@ namespace SSCMS.Cli.Jobs
                 return;
             }
 
-            await FileUtils.WriteTextAsync(_pathManager.GetWebRootPath("index.html"), Constants.Html5Empty);
+            await FileUtils.WriteTextAsync(_pathManager.GetRootPath("index.html"), Constants.Html5Empty);
 
             await WriteUtils.PrintSuccessAsync("Congratulations, SS CMS was installed successfully!");
         }

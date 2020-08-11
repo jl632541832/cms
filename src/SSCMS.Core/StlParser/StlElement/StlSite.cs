@@ -203,11 +203,11 @@ namespace SSCMS.Core.StlParser.StlElement
 
             var inputType = InputType.Text;
 
-            if (type.ToLower().Equals(TypeSiteName.ToLower()))
+            if (StringUtils.EqualsIgnoreCase(type, TypeSiteName))
             {
                 parsedContent = pageInfo.Site.SiteName;
             }
-            else if (type.ToLower().Equals(TypeSiteUrl.ToLower()))
+            else if (StringUtils.EqualsIgnoreCase(type, TypeSiteUrl))
             {
                 parsedContent = await parseManager.PathManager.GetWebUrlAsync(pageInfo.Site);
             }
@@ -222,13 +222,13 @@ namespace SSCMS.Core.StlParser.StlElement
                     {
                         if (isClearTags && InputTypeUtils.EqualsAny(styleInfo.InputType, InputType.Image, InputType.File))
                         {
-                            parsedContent = await parseManager.PathManager.ParseNavigationUrlAsync(pageInfo.Site, parsedContent, pageInfo.IsLocal);
+                            parsedContent = await parseManager.PathManager.ParseSiteUrlAsync(pageInfo.Site, parsedContent, pageInfo.IsLocal);
                         }
                         else
                         {
                             var inputParser = new InputParserManager(parseManager.PathManager);
 
-                            parsedContent = await inputParser.GetContentByTableStyleAsync(parsedContent, separator, pageInfo.Config, pageInfo.Site, styleInfo, formatString, contextInfo.Attributes, contextInfo.InnerHtml, false);
+                            parsedContent = await inputParser.GetContentByTableStyleAsync(parsedContent, separator, pageInfo.Site, styleInfo, formatString, contextInfo.Attributes, contextInfo.InnerHtml, false);
 
                             inputType = styleInfo.InputType;
 

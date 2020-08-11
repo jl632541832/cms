@@ -44,20 +44,10 @@ namespace SSCMS.Web.Controllers.Admin
             public string Culture { get; set; }
             public List<GetPlugin> Plugins { get; set; }
             public IList<Menu> Menus { get; set; }
-            public string SiteType { get; set; }
+            public SiteType SiteType { get; set; }
             public string SiteUrl { get; set; }
             public string PreviewUrl { get; set; }
             public Local Local { get; set; }
-        }
-
-        public class CreateRequest
-        {
-            public string SessionId { get; set; }
-        }
-
-        public class DownloadRequest
-        {
-            public string Version { get; set; }
         }
 
         public class SetLanguageRequest

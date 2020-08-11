@@ -4,8 +4,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
 using SSCMS.Configuration;
-using SSCMS.Core.Extensions;
 using SSCMS.Dto;
+using SSCMS.Enums;
+using SSCMS.Extensions;
 using SSCMS.Models;
 using SSCMS.Repositories;
 using SSCMS.Services;
@@ -26,14 +27,16 @@ namespace SSCMS.Web.Controllers.Home
         private readonly ITableStyleRepository _tableStyleRepository;
         private readonly IUserRepository _userRepository;
         private readonly IUserGroupRepository _userGroupRepository;
+        private readonly IStatRepository _statRepository;
 
-        public RegisterController(ISettingsManager settingsManager, IConfigRepository configRepository, ITableStyleRepository tableStyleRepository, IUserRepository userRepository, IUserGroupRepository userGroupRepository)
+        public RegisterController(ISettingsManager settingsManager, IConfigRepository configRepository, ITableStyleRepository tableStyleRepository, IUserRepository userRepository, IUserGroupRepository userGroupRepository, IStatRepository statRepository)
         {
             _settingsManager = settingsManager;
             _configRepository = configRepository;
             _tableStyleRepository = tableStyleRepository;
             _userRepository = userRepository;
             _userGroupRepository = userGroupRepository;
+            _statRepository = statRepository;
         }
 
         [HttpGet, Route(Route)]
@@ -44,9 +47,9 @@ namespace SSCMS.Web.Controllers.Home
             if (config.IsHomeClosed) return this.Error("对不起，用户中心已被禁用！");
             if (!config.IsUserRegistrationAllowed) return this.Error("对不起，系统已禁止新用户注册！");
 
-            var userStyles = await _tableStyleRepository.GetUserStyleListAsync();
+            var userStyles = await _tableStyleRepository.GetUserStylesAsync();
             var styles = userStyles
-                .Where(x => StringUtils.ContainsIgnoreCase(config.UserRegistrationAttributes, x.AttributeName))
+                .Where(x => ListUtils.ContainsIgnoreCase(config.UserRegistrationAttributes, x.AttributeName))
                 .Select(x => new InputStyle(x));
 
             return new GetResult
@@ -55,7 +58,7 @@ namespace SSCMS.Web.Controllers.Home
                 IsHomeAgreement = config.IsHomeAgreement,
                 HomeAgreementHtml = config.HomeAgreementHtml,
                 Styles = styles,
-                Groups = await _userGroupRepository.GetUserGroupListAsync()
+                Groups = await _userGroupRepository.GetUserGroupsAsync()
             };
         }
 
@@ -68,6 +71,8 @@ namespace SSCMS.Web.Controllers.Home
             {
                 return this.Error($"用户注册失败：{errorMessage}");
             }
+
+            await _statRepository.AddCountAsync(StatType.UserRegister);
 
             return new BoolResult
             {

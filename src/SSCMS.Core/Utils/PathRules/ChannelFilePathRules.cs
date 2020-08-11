@@ -57,7 +57,7 @@ namespace SSCMS.Core.Utils.PathRules
                 };
 
             var channelInfo = await _databaseManager.ChannelRepository.GetAsync(channelId);
-            var styleInfoList = await _databaseManager.TableStyleRepository.GetChannelStyleListAsync(channelInfo);
+            var styleInfoList = await _databaseManager.TableStyleRepository.GetChannelStylesAsync(channelInfo);
             foreach (var styleInfo in styleInfoList)
             {
                 if (styleInfo.InputType == InputType.Text)
@@ -163,12 +163,12 @@ namespace SSCMS.Core.Utils.PathRules
                 else if (StringUtils.EqualsIgnoreCase(element, LowerChannelName))
                 {
                     if (node == null) node = await _databaseManager.ChannelRepository.GetAsync(channelId);
-                    value = node.ChannelName.ToLower();
+                    value = StringUtils.ToLower(node.ChannelName);
                 }
                 else if (StringUtils.EqualsIgnoreCase(element, LowerChannelIndex))
                 {
                     if (node == null) node = await _databaseManager.ChannelRepository.GetAsync(channelId);
-                    value = node.IndexName.ToLower();
+                    value = StringUtils.ToLower(node.IndexName);
                 }
                 else
                 {
@@ -186,7 +186,7 @@ namespace SSCMS.Core.Utils.PathRules
 
                     if (isLower)
                     {
-                        value = value.ToLower();
+                        value = StringUtils.ToLower(value);
                     }
                 }
 

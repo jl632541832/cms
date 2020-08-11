@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Mono.Options;
 using SSCMS.Cli.Abstractions;
@@ -29,7 +30,7 @@ namespace SSCMS.Cli.Jobs
 
         public void PrintUsage()
         {
-            Console.WriteLine($"Usage: sscms-cli {CommandName}");
+            Console.WriteLine($"Usage: sscms {CommandName}");
             Console.WriteLine("Summary: run sscms");
             Console.WriteLine("Options:");
             _options.WriteOptionDescriptions(Console.Out);
@@ -46,16 +47,28 @@ namespace SSCMS.Cli.Jobs
                 return;
             }
 
-            var psi = new ProcessStartInfo("./sscms") { RedirectStandardOutput = true };
-            var proc = Process.Start(psi);
-            if (proc == null)
+            Process proc;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                await WriteUtils.PrintErrorAsync("Can not run sscms.");
+                var psi = new ProcessStartInfo("./SSCMS.Web") { RedirectStandardOutput = true };
+                proc = Process.Start(psi);
             }
             else
             {
-                OpenUrl("http://localhost:5000");
-                Console.WriteLine("-------------Start SS CMS--------------");
+                proc = Process.Start("./SSCMS.Web");
+            }
+
+            if (proc == null)
+            {
+                await WriteUtils.PrintErrorAsync("Can not run SSCMS.");
+            }
+            else
+            {
+                Console.WriteLine("Starting SS CMS...");
+                Thread.Sleep(5000);
+
+                OpenUrl("http://localhost:5000/ss-admin/");
+
                 using var sr = proc.StandardOutput;
                 while (!sr.EndOfStream)
                 {
@@ -73,28 +86,31 @@ namespace SSCMS.Cli.Jobs
         {
             try
             {
-                Process.Start(url);
+                try
+                {
+                    Process.Start(url);
+                }
+                catch
+                {
+                    // hack because of this: https://github.com/dotnet/corefx/issues/10361
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        url = url.Replace("&", "^&");
+                        Process.Start(new ProcessStartInfo("cmd", $"/c start {url}") {CreateNoWindow = true});
+                    }
+                    else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    {
+                        Process.Start("xdg-open", url);
+                    }
+                    else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                    {
+                        Process.Start("open", url);
+                    }
+                }
             }
             catch
             {
-                // hack because of this: https://github.com/dotnet/corefx/issues/10361
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    url = url.Replace("&", "^&");
-                    Process.Start(new ProcessStartInfo("cmd", $"/c start {url}") { CreateNoWindow = true });
-                }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                {
-                    Process.Start("xdg-open", url);
-                }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                {
-                    Process.Start("open", url);
-                }
-                else
-                {
-                    throw;
-                }
+                // ignored
             }
         }
     }

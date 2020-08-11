@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Mono.Options;
 using SSCMS.Cli.Abstractions;
 using SSCMS.Cli.Core;
+using SSCMS.Utils;
 
 namespace SSCMS.Cli.Jobs
 {
@@ -41,7 +42,7 @@ namespace SSCMS.Cli.Jobs
 
         public void PrintUsage()
         {
-            Console.WriteLine($"Usage: sscms-cli {CommandName}");
+            Console.WriteLine($"Usage: sscms {CommandName}");
             Console.WriteLine("Summary: register a new user");
             Console.WriteLine("Options:");
             _options.WriteOptionDescriptions(Console.Out);
@@ -64,6 +65,13 @@ namespace SSCMS.Cli.Jobs
                 return;
             }
 
+            if (!StringUtils.IsStrictName(_userName))
+            {
+                await WriteUtils.PrintErrorAsync(
+                    $@"Invalid username: ""{_userName}"", string does not match the pattern of ""{StringUtils.StrictNameRegex}""");
+                return;
+            }
+
             if (string.IsNullOrEmpty(_password))
             {
                 await WriteUtils.PrintErrorAsync("missing required options '--password'");
@@ -73,7 +81,7 @@ namespace SSCMS.Cli.Jobs
             var (success, failureMessage) = _apiService.Register(_userName, _mobile, _email, _password);
             if (success)
             {
-                await WriteUtils.PrintSuccessAsync("you have registered successfully, run sscms-cli login to log in.");
+                await WriteUtils.PrintSuccessAsync("you have registered successfully, run sscms login to log in.");
             }
             else
             {

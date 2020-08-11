@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using System.Globalization;
+using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
 using SSCMS.Services;
 using SSCMS.Utils;
@@ -23,11 +25,17 @@ namespace SSCMS.Web.Controllers
         [HttpGet, Route(Route)]
         public string Get()
         {
-            _taskManager.Queue(async token =>
+            //_taskManager.Queue(async cancel =>
+            //{
+            //    var filePath = PathUtils.Combine(_settingsManager.WebRootPath, "test.txt");
+            //    await FileUtils.WriteTextAsync(filePath, "my name");
+            //});
+
+            _taskManager.RunOnceAt(async () =>
             {
                 var filePath = PathUtils.Combine(_settingsManager.WebRootPath, "test.txt");
-                await FileUtils.WriteTextAsync(filePath, "my name");
-            });
+                await FileUtils.WriteTextAsync(filePath, DateTime.Now.ToString(CultureInfo.InvariantCulture));
+            }, DateTime.Now.AddSeconds(10));
 
             return "pong";
         }

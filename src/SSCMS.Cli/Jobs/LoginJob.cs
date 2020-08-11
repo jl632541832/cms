@@ -39,7 +39,7 @@ namespace SSCMS.Cli.Jobs
 
         public void PrintUsage()
         {
-            Console.WriteLine($"Usage: sscms-cli {CommandName}");
+            Console.WriteLine($"Usage: sscms {CommandName}");
             Console.WriteLine("Summary: user login");
             Console.WriteLine("Options:");
             _options.WriteOptionDescriptions(Console.Out);
@@ -58,14 +58,12 @@ namespace SSCMS.Cli.Jobs
 
             if (string.IsNullOrEmpty(_account))
             {
-                await WriteUtils.PrintErrorAsync("missing required options '--username' or '--mobile' or 'email'");
-                return;
+                _account = ReadUtils.GetString("Username:");
             }
 
             if (string.IsNullOrEmpty(_password))
             {
-                await WriteUtils.PrintErrorAsync("missing required options '--password'");
-                return;
+                _password = ReadUtils.GetPassword("Password:");
             }
 
             var (success, failureMessage) = await _apiService.LoginAsync(_account, _password);

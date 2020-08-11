@@ -3,16 +3,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using CacheManager.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
-using SSCMS.Core.Extensions;
 using SSCMS.Core.Utils;
 using SSCMS.Core.Utils.Serialization;
 using SSCMS.Dto;
 using SSCMS.Enums;
+using SSCMS.Extensions;
 using SSCMS.Repositories;
 using SSCMS.Services;
 using SSCMS.Utils;
@@ -37,7 +36,7 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Channels
         private readonly IPathManager _pathManager;
         private readonly ICreateManager _createManager;
         private readonly IDatabaseManager _databaseManager;
-        private readonly IOldPluginManager _pluginManager;
+        private readonly IOldPluginManager _oldPluginManager;
         private readonly ISiteRepository _siteRepository;
         private readonly IChannelRepository _channelRepository;
         private readonly IContentRepository _contentRepository;
@@ -45,14 +44,14 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Channels
         private readonly ITemplateRepository _templateRepository;
         private readonly ITableStyleRepository _tableStyleRepository;
 
-        public ChannelsController(ICacheManager<CacheUtils.Process> cacheManager, IAuthManager authManager, IPathManager pathManager, ICreateManager createManager, IDatabaseManager databaseManager, IOldPluginManager pluginManager, ISiteRepository siteRepository, IChannelRepository channelRepository, IContentRepository contentRepository, IChannelGroupRepository channelGroupRepository, ITemplateRepository templateRepository, ITableStyleRepository tableStyleRepository)
+        public ChannelsController(ICacheManager<CacheUtils.Process> cacheManager, IAuthManager authManager, IPathManager pathManager, ICreateManager createManager, IDatabaseManager databaseManager, IOldPluginManager oldPluginManager, ISiteRepository siteRepository, IChannelRepository channelRepository, IContentRepository contentRepository, IChannelGroupRepository channelGroupRepository, ITemplateRepository templateRepository, ITableStyleRepository tableStyleRepository)
         {
             _cacheManager = cacheManager;
             _authManager = authManager;
             _pathManager = pathManager;
             _createManager = createManager;
             _databaseManager = databaseManager;
-            _pluginManager = pluginManager;
+            _oldPluginManager = oldPluginManager;
             _siteRepository = siteRepository;
             _channelRepository = channelRepository;
             _contentRepository = contentRepository;
@@ -88,13 +87,13 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Channels
                 };
             });
 
-            var indexNames = await _channelRepository.GetChannelIndexNameListAsync(request.SiteId);
+            var indexNames = await _channelRepository.GetChannelIndexNamesAsync(request.SiteId);
             var groupNameList = await _channelGroupRepository.GetGroupNamesAsync(request.SiteId);
 
-            var channelTemplates = await _templateRepository.GetTemplateListByTypeAsync(request.SiteId, TemplateType.ChannelTemplate);
-            var contentTemplates = await _templateRepository.GetTemplateListByTypeAsync(request.SiteId, TemplateType.ContentTemplate);
-            var contentPlugins = _pluginManager.GetContentModelPlugins();
-            var relatedPlugins = _pluginManager.GetAllContentRelatedPlugins(false);
+            var channelTemplates = await _templateRepository.GetTemplatesByTypeAsync(request.SiteId, TemplateType.ChannelTemplate);
+            var contentTemplates = await _templateRepository.GetTemplatesByTypeAsync(request.SiteId, TemplateType.ContentTemplate);
+            var contentPlugins = _oldPluginManager.GetContentModelPlugins();
+            var relatedPlugins = _oldPluginManager.GetAllContentRelatedPlugins(false);
 
             return new ChannelsResult
             {
@@ -111,7 +110,7 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Channels
         [HttpPost, Route(RouteAppend)]
         public async Task<ActionResult<List<int>>> Append([FromBody] AppendRequest request)
         {
-            if (!await _authManager.HasChannelPermissionsAsync(request.SiteId, request.ParentId, AuthTypes.SiteChannelPermissions.Add))
+            if (!await _authManager.HasChannelPermissionsAsync(request.SiteId, request.ParentId, AuthTypes.ChannelPermissions.Add))
             {
                 return Unauthorized();
             }
@@ -155,7 +154,7 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Channels
                         indexName = channelName.Trim();
                     }
 
-                    if (StringUtils.Contains(channelName, "(") && StringUtils.Contains(channelName, ")"))
+                    if (channelName.Contains('(') && channelName.Contains(')'))
                     {
                         var length = channelName.IndexOf(')') - channelName.IndexOf('(');
                         if (length > 0)
@@ -170,7 +169,7 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Channels
                     {
                         if (nodeIndexNameList == null)
                         {
-                            nodeIndexNameList = (await _channelRepository.GetIndexNameListAsync(request.SiteId)).ToList();
+                            nodeIndexNameList = (await _channelRepository.GetIndexNamesAsync(request.SiteId)).ToList();
                         }
                         if (nodeIndexNameList.Contains(indexName))
                         {
@@ -198,7 +197,7 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Channels
         [HttpDelete, Route(Route)]
         public async Task<ActionResult<List<int>>> Delete([FromBody] DeleteRequest request)
         {
-            if (!await _authManager.HasChannelPermissionsAsync(request.SiteId, request.ChannelId, AuthTypes.SiteChannelPermissions.Delete))
+            if (!await _authManager.HasChannelPermissionsAsync(request.SiteId, request.ChannelId, AuthTypes.ChannelPermissions.Delete))
             {
                 return Unauthorized();
             }
@@ -208,11 +207,6 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Channels
 
             var channel = await _channelRepository.GetAsync(request.ChannelId);
             if (channel == null) return this.Error("无法确定父栏目");
-
-            if (channel.ChannelName != request.ChannelName)
-            {
-                return this.Error("请检查您输入的栏目名称是否正确");
-            }
 
             var channelIdList = await _channelRepository.GetChannelIdsAsync(request.SiteId, request.ChannelId, ScopeType.All);
 
@@ -225,7 +219,7 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Channels
 
             foreach (var channelId in channelIdList)
             {
-                await _contentRepository.RecycleAllAsync(site, channelId, adminId);
+                await _contentRepository.TrashContentsAsync(site, channelId, adminId);
                 await _channelRepository.DeleteAsync(site, channelId, adminId);
             }
 
@@ -242,7 +236,7 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Channels
         [HttpPost, Route(RouteUpload)]
         public async Task<ActionResult<StringResult>> Upload([FromQuery] int siteId, [FromForm]IFormFile file)
         {
-            if (!await _authManager.HasChannelPermissionsAsync(siteId, siteId, AuthTypes.SiteChannelPermissions.Add))
+            if (!await _authManager.HasChannelPermissionsAsync(siteId, siteId, AuthTypes.ChannelPermissions.Add))
             {
                 return Unauthorized();
             }
@@ -274,7 +268,7 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Channels
         [HttpPost, Route(RouteImport)]
         public async Task<ActionResult<List<int>>> Import([FromBody] ImportRequest request)
         {
-            if (!await _authManager.HasChannelPermissionsAsync(request.SiteId, request.ChannelId, AuthTypes.SiteChannelPermissions.Add))
+            if (!await _authManager.HasChannelPermissionsAsync(request.SiteId, request.ChannelId, AuthTypes.ChannelPermissions.Add))
             {
                 return Unauthorized();
             }
@@ -286,7 +280,7 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Channels
                 var adminId = _authManager.AdminId;
                 var caching = new CacheUtils(_cacheManager);
 
-                var importObject = new ImportObject(_pathManager, _pluginManager, _databaseManager, caching, site, adminId);
+                var importObject = new ImportObject(_pathManager, _oldPluginManager, _databaseManager, caching, site, adminId);
                 await importObject.ImportChannelsAndContentsByZipFileAsync(request.ChannelId, filePath,
                     request.IsOverride, null);
 
@@ -316,10 +310,10 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Channels
             if (site == null) return NotFound();
 
             var caching = new CacheUtils(_cacheManager);
-            var exportObject = new ExportObject(_pathManager, _databaseManager, caching, _pluginManager, site);
+            var exportObject = new ExportObject(_pathManager, _databaseManager, caching, _oldPluginManager, site);
             var fileName = await exportObject.ExportChannelsAsync(request.ChannelIds);
             var filePath = _pathManager.GetTemporaryFilesPath(fileName);
-            var url = _pathManager.GetDownloadApiUrl(_pathManager.InnerApiUrl, filePath);
+            var url = _pathManager.GetDownloadApiUrl(true, filePath);
 
             return new StringResult
             {

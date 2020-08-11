@@ -21,8 +21,10 @@ namespace SSCMS.Services
 
         Task<string> GetAssetsUrlAsync(Site site);
 
-        string MapPath(string virtualPath);
+        string ParsePath(string virtualPath);
 
         Task UploadAsync(IFormFile file, string filePath);
+
+        Task UploadAsync(byte[] bytes, string filePath);
     }
 }

@@ -45,6 +45,18 @@ namespace SSCMS.Utils
             return retVal;
         }
 
+        private static string NormalizePath(string path)
+        {
+            return Path.GetFullPath(new Uri(path).LocalPath)
+                .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                .ToUpperInvariant();
+        }
+
+        public static bool IsEquals(string path1, string path2)
+        {
+            return NormalizePath(path1) == NormalizePath(path2);
+        }
+
         public static bool IsExtension(string ext, params string[] extensions)
         {
             return extensions.Any(extension => StringUtils.EqualsIgnoreCase(ext, extension));
@@ -74,6 +86,23 @@ namespace SSCMS.Utils
             return url.Substring(0, url.IndexOf("?", StringComparison.Ordinal));
         }
 
+        public static string GetUploadFileName(string filePath, bool isUploadChangeFileName)
+        {
+            if (isUploadChangeFileName)
+            {
+                return $"{StringUtils.GetShortGuid(false)}{GetExtension(filePath)}";
+            }
+
+            var fileName = GetFileNameWithoutExtension(filePath);
+            fileName = GetSafeFilename(fileName);
+            return $"{fileName}{GetExtension(filePath)}";
+        }
+
+        /// <summary>
+        /// including the period "."
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         public static string GetExtension(string path)
         {
             var retVal = string.Empty;
@@ -127,7 +156,7 @@ namespace SSCMS.Utils
 
         public static string GetSafeFilename(string filename)
         {
-            if (string.IsNullOrEmpty(filename)) return StringUtils.GetShortGuid().ToLower();
+            if (string.IsNullOrEmpty(filename)) return StringUtils.ToLower(StringUtils.GetShortGuid());
 
             return string.Join("_", filename.Split(GetInvalidChars()));
         }
@@ -178,22 +207,22 @@ namespace SSCMS.Utils
             if (string.IsNullOrEmpty(filePath))
                 return filePath;
             var invalidChars = new string(Path.GetInvalidPathChars());
-            string invalidReStr = $"[{Regex.Escape(invalidChars)}]";
+            var invalidReStr = $"[{Regex.Escape(invalidChars)}]";
             return Regex.Replace(filePath, invalidReStr, "");
         }
 
         public static bool IsFileExtensionAllowed(string sAllowedExt, string sExt)
         {
-            if (sExt != null && sExt.StartsWith("."))
+            if (sExt != null && !sExt.StartsWith("."))
             {
-                sExt = sExt.Substring(1, sExt.Length - 1);
+                sExt = $".{sExt}";
             }
             sAllowedExt = sAllowedExt.Replace("|", ",");
             var aExt = sAllowedExt.Split(',');
             return aExt.Any(t => StringUtils.EqualsIgnoreCase(sExt, t));
         }
 
-        public static string GetLibraryVirtualDirectoryPath(UploadType uploadType)
+        public static string GetMaterialVirtualDirectoryPath(UploadType uploadType)
         {
             var uploadDirectoryName = string.Empty;
 
@@ -218,17 +247,26 @@ namespace SSCMS.Utils
                 uploadDirectoryName = "specials";
             }
 
-            return $"/{DirectoryUtils.SiteFilesDirectoryName}/{DirectoryUtils.SiteFiles.Library}/{uploadDirectoryName}/{DateTime.Now.Year}/{DateTime.Now.Month}";
+            return $"/{DirectoryUtils.SiteFiles.DirectoryName}/{DirectoryUtils.SiteFiles.Library}/{uploadDirectoryName}/{DateTime.Now.Year}/{DateTime.Now.Month}";
         }
 
-        public static string GetLibraryVirtualFilePath(UploadType uploadType, string fileName)
+        public static string GetMaterialVirtualFilePath(UploadType uploadType, string fileName)
         {
-            return GetLibraryVirtualDirectoryPath(uploadType) + "/" + fileName;
+            return GetMaterialVirtualDirectoryPath(uploadType) + "/" + fileName;
         }
 
-        public static string GetLibraryFileName(string filePath)
+        public static string GetMaterialFileName(string filePath)
         {
             return $"{StringUtils.GetShortGuid(false)}{GetExtension(filePath)}";
+        }
+
+        public static string GetMaterialFileNameByExtName(string extName)
+        {
+            if (!extName.StartsWith("."))
+            {
+                extName = "." + extName;
+            }
+            return $"{StringUtils.GetShortGuid(false)}{extName}";
         }
 
         public static string GetOsUserProfileDirectoryPath(params string[] paths)

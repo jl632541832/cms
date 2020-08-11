@@ -160,30 +160,32 @@ namespace SSCMS.Core.StlParser.StlElement
                 return parsedContent;
             }
 
-            if (type.ToLower().Equals(TypeSiteName.ToLower()))
+            if (StringUtils.EqualsIgnoreCase(type, TypeSiteName))
             {
                 parsedContent = pageInfo.Site.SiteName;
             }
-            else if (type.ToLower().Equals(TypeSiteUrl.ToLower()))
+            else if (StringUtils.EqualsIgnoreCase(type, TypeSiteUrl))
             {
                 parsedContent = await parseManager.PathManager.GetWebUrlAsync(pageInfo.Site);
             }
-            else if (type.ToLower().Equals(TypeDate.ToLower()))
+            else if (StringUtils.EqualsIgnoreCase(type, TypeDate))
             {
                 if (!pageInfo.BodyCodes.ContainsKey("datestring.js"))
                 {
-                    pageInfo.BodyCodes.Add("datestring.js", $@"<script charset=""{SiteFilesAssets.DateString.Charset}"" src=""{SiteFilesAssets.GetUrl(
-                        pageInfo.ApiUrl, SiteFilesAssets.DateString.Js)}"" type=""text/javascript""></script>");
+                    var jsUrl = parseManager.PathManager.GetSiteFilesUrl(Resources.DateString.Js);
+
+                    pageInfo.BodyCodes.Add("datestring.js", $@"<script charset=""{Resources.DateString.Charset}"" src=""{jsUrl}"" type=""text/javascript""></script>");
                 }
 
                 parsedContent = @"<script language=""javascript"" type=""text/javascript"">RunGLNL(false);</script>";
             }
-            else if (type.ToLower().Equals(TypeDateOfTraditional.ToLower()))
+            else if (StringUtils.EqualsIgnoreCase(type, TypeDateOfTraditional))
             {
                 if (!pageInfo.BodyCodes.ContainsKey("datestring"))
                 {
-                    pageInfo.BodyCodes.Add("datestring", $@"<script charset=""{SiteFilesAssets.DateString.Charset}"" src=""{SiteFilesAssets.GetUrl(
-                        pageInfo.ApiUrl, SiteFilesAssets.DateString.Js)}"" type=""text/javascript""></script>");
+                    var jsUrl = parseManager.PathManager.GetSiteFilesUrl(Resources.DateString.Js);
+
+                    pageInfo.BodyCodes.Add("datestring", $@"<script charset=""{Resources.DateString.Charset}"" src=""{jsUrl}"" type=""text/javascript""></script>");
                 }
 
                 parsedContent = @"<script language=""javascript"" type=""text/javascript"">RunGLNL(true);</script>";
@@ -207,13 +209,13 @@ namespace SSCMS.Core.StlParser.StlElement
                         {
                             if (isClearTags && InputTypeUtils.EqualsAny(styleInfo.InputType, InputType.Image, InputType.File))
                             {
-                                parsedContent = await parseManager.PathManager.ParseNavigationUrlAsync(pageInfo.Site, parsedContent, pageInfo.IsLocal);
+                                parsedContent = await parseManager.PathManager.ParseSiteUrlAsync(pageInfo.Site, parsedContent, pageInfo.IsLocal);
                             }
                             else
                             {
                                 var inputParser = new InputParserManager(parseManager.PathManager);
 
-                                parsedContent = await inputParser.GetContentByTableStyleAsync(parsedContent, separator, pageInfo.Config, pageInfo.Site, styleInfo, formatString, contextInfo.Attributes, contextInfo.InnerHtml, false);
+                                parsedContent = await inputParser.GetContentByTableStyleAsync(parsedContent, separator, pageInfo.Site, styleInfo, formatString, contextInfo.Attributes, contextInfo.InnerHtml, false);
                                 parsedContent = InputTypeUtils.ParseString(styleInfo.InputType, parsedContent, replace, to, startIndex, length, wordNum, ellipsis, isClearTags, isReturnToBr, isLower, isUpper, formatString);
                             }
                         }

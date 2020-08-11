@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <LangVersion>latest</LangVersion>
-    <Version>7.0.0-preview6</Version>
+    <Version>7.0.0</Version>
     <UserSecretsId>be371ebf-a970-4d7c-8db5-77392513935f</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>..\..</DockerfileContext>
@@ -26,11 +26,12 @@
     <None Remove="plugins\**" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Remove="assets\**\*" CopyToPublishDirectory="Never" />
-  </ItemGroup>
+  <!--<ItemGroup>
+    <Content Include="wwwroot\**\*" CopyToPublishDirectory="PreserveNewest" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>-->
 
   <!--<ItemGroup>
+    https://github.com/dotnet/core/blob/master/Documentation/build-and-install-rhel6-prerequisites.md
     <RuntimeHostConfigurationOption Include="System.Globalization.Invariant" Value="true" />
     this code will cause sqlserver connection not work
   </ItemGroup>-->

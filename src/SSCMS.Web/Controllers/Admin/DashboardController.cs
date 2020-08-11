@@ -47,7 +47,11 @@ namespace SSCMS.Web.Controllers.Admin
                 Version = _settingsManager.Version,
                 LastActivityDate = DateUtils.GetDateString(lastActivityDate, DateFormatType.Chinese),
                 UpdateDate = DateUtils.GetDateString(config.UpdateDate, DateFormatType.Chinese),
-                AdminWelcomeHtml = config.AdminWelcomeHtml
+                AdminWelcomeHtml = config.AdminWelcomeHtml,
+                FrameworkDescription = _settingsManager.FrameworkDescription,
+                OSDescription = _settingsManager.OSDescription,
+                Containerized = _settingsManager.Containerized,
+                CPUCores = _settingsManager.CPUCores
             };
         }
 
@@ -58,7 +62,7 @@ namespace SSCMS.Web.Controllers.Admin
 
             if (await _authManager.IsSuperAdminAsync())
             {
-                foreach (var site in await _siteRepository.GetSiteListAsync())
+                foreach (var site in await _siteRepository.GetSitesAsync())
                 {
                     var count = await _contentRepository.GetCountCheckingAsync(site);
                     if (count > 0)

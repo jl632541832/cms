@@ -17,12 +17,12 @@ namespace SSCMS.Core.Services
         private readonly IDatabaseManager _databaseManager;
         private readonly List<Permission> _permissions;
 
-        public AuthManager(IHttpContextAccessor context, ISettingsManager settingsManager, IPluginManager pluginManager, IDatabaseManager databaseManager)
+        public AuthManager(IHttpContextAccessor context, ISettingsManager settingsManager, IDatabaseManager databaseManager)
         {
             _principal = context.HttpContext.User;
             _settingsManager = settingsManager;
             _databaseManager = databaseManager;
-            _permissions = pluginManager.GetPermissions();
+            _permissions = _settingsManager.GetPermissions();
         }
 
         private Administrator _admin;
@@ -60,13 +60,8 @@ namespace SSCMS.Core.Services
                 if (user != null && !user.Locked && user.Checked)
                 {
                     _userGroup = await _databaseManager.UserGroupRepository.GetUserGroupAsync(user.GroupId);
-                    if (_userGroup != null)
-                    {
-                        _admin = await _databaseManager.AdministratorRepository.GetByUserNameAsync(_userGroup.AdminName);
-                    }
+                    _admin = await _databaseManager.AdministratorRepository.GetByUserNameAsync(_userGroup.AdminName);
                 }
-
-                _admin = await _databaseManager.AdministratorRepository.GetByUserNameAsync(AdminName);
             }
             else if (IsApi)
             {

@@ -2,16 +2,15 @@
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using CacheManager.Core;
 using Datory;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
-using SSCMS.Core.Extensions;
 using SSCMS.Core.Utils;
 using SSCMS.Core.Utils.Office;
 using SSCMS.Dto;
+using SSCMS.Extensions;
 using SSCMS.Models;
 using SSCMS.Repositories;
 using SSCMS.Services;
@@ -66,9 +65,9 @@ namespace SSCMS.Web.Controllers.Admin.Settings.Administrators
 
             var adminId = _authManager.AdminId;
             var adminName = _authManager.AdminName;
-            var roleNameList = await _authManager.IsSuperAdminAsync() ? await _roleRepository.GetRoleNameListAsync() : await _roleRepository.GetRoleNameListByCreatorUserNameAsync(adminName);
+            var roleNameList = await _authManager.IsSuperAdminAsync() ? await _roleRepository.GetRoleNamesAsync() : await _roleRepository.GetRoleNamesByCreatorUserNameAsync(adminName);
 
-            var predefinedRoles = TranslateUtils.GetEnums<PredefinedRole>();
+            var predefinedRoles = ListUtils.GetEnums<PredefinedRole>();
             foreach (var predefinedRole in predefinedRoles)
             {
                 roles.Add(new KeyValuePair<string, string>(predefinedRole.GetValue(), predefinedRole.GetDisplayName()));
@@ -127,9 +126,9 @@ namespace SSCMS.Web.Controllers.Admin.Settings.Administrators
                 return Unauthorized();
             }
 
-            var roles = await _roleRepository.GetRoleNameListAsync();
+            var roles = await _roleRepository.GetRoleNamesAsync();
             roles = roles.Where(x => !_roleRepository.IsPredefinedRole(x)).ToList();
-            var allSites = await _siteRepository.GetSiteListAsync();
+            var allSites = await _siteRepository.GetSitesAsync();
 
             var adminInfo = await _administratorRepository.GetByUserIdAsync(adminId);
             var adminRoles = await _administratorsInRolesRepository.GetRolesForUserAsync(adminInfo.UserName);
@@ -369,7 +368,7 @@ namespace SSCMS.Web.Controllers.Admin.Settings.Administrators
 
             var excelObject = new ExcelObject(_databaseManager, _pluginManager, _pathManager);
             await excelObject.CreateExcelFileForAdministratorsAsync(filePath);
-            var downloadUrl = _pathManager.GetRootUrlByPhysicalPath(filePath);
+            var downloadUrl = _pathManager.GetRootUrlByPath(filePath);
 
             return new StringResult
             {

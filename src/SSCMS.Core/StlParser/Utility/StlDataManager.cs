@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using Datory.Utils;
 using SSCMS.Enums;
 using SSCMS.Services;
 using SSCMS.Utils;
@@ -56,7 +55,7 @@ namespace SSCMS.Core.StlParser.Utility
                     {
                         if (topLevel < channel.ParentsCount)
                         {
-                            var parentIdStrList = Utilities.GetStringList(channel.ParentsPath);
+                            var parentIdStrList = ListUtils.GetStringList(channel.ParentsPath);
                             if (parentIdStrList[topLevel] != null)
                             {
                                 var parentIdStr = parentIdStrList[topLevel];
@@ -73,7 +72,7 @@ namespace SSCMS.Core.StlParser.Utility
                 {
                     if (upLevel < channel.ParentsCount)
                     {
-                        var parentIdStrList = Utilities.GetStringList(channel.ParentsPath);
+                        var parentIdStrList = ListUtils.GetStringList(channel.ParentsPath);
                         if (parentIdStrList[upLevel] != null)
                         {
                             var parentIdStr = parentIdStrList[channel.ParentsCount - upLevel];
@@ -94,7 +93,7 @@ namespace SSCMS.Core.StlParser.Utility
             var whereString = _databaseManager.ChannelRepository.GetWhereString(groupChannel, groupChannelNot, isImageExists, isImage);
             var channelInfo = await _databaseManager.ChannelRepository.GetAsync(channelId);
             var channelIdList = await _databaseManager.ChannelRepository.GetChannelIdsAsync(channelInfo, scopeType, groupChannel, groupChannelNot, string.Empty);
-            return await _databaseManager.ChannelRepository.GetIdListByTotalNumAsync(channelIdList, totalNum, orderByString, whereString);
+            return await _databaseManager.ChannelRepository.GetChannelIdsByTotalNumAsync(channelIdList, totalNum, orderByString, whereString);
         }
 
         public string GetContentOrderByString(int siteId, string orderValue, TaxisType defaultType)
@@ -103,47 +102,47 @@ namespace SSCMS.Core.StlParser.Utility
             var orderByString = string.Empty;
             if (!string.IsNullOrEmpty(orderValue))
             {
-                if (orderValue.ToLower().Equals(StlParserUtility.OrderDefault.ToLower()))
+                if (StringUtils.EqualsIgnoreCase(orderValue, StlParserUtility.OrderDefault))
                 {
                     taxisType = TaxisType.OrderByTaxisDesc;
                 }
-                else if (orderValue.ToLower().Equals(StlParserUtility.OrderBack.ToLower()))
+                else if (StringUtils.EqualsIgnoreCase(orderValue, StlParserUtility.OrderBack))
                 {
                     taxisType = TaxisType.OrderByTaxis;
                 }
-                else if (orderValue.ToLower().Equals(StlParserUtility.OrderAddDate.ToLower()))
+                else if (StringUtils.EqualsIgnoreCase(orderValue, StlParserUtility.OrderAddDate))
                 {
                     taxisType = TaxisType.OrderByAddDateDesc;
                 }
-                else if (orderValue.ToLower().Equals(StlParserUtility.OrderAddDateBack.ToLower()))
+                else if (StringUtils.EqualsIgnoreCase(orderValue, StlParserUtility.OrderAddDateBack))
                 {
                     taxisType = TaxisType.OrderByAddDate;
                 }
-                else if (orderValue.ToLower().Equals(StlParserUtility.OrderLastModifiedDate.ToLower()))
+                else if (StringUtils.EqualsIgnoreCase(orderValue, StlParserUtility.OrderLastModifiedDate))
                 {
                     taxisType = TaxisType.OrderByLastModifiedDateDesc;
                 }
-                else if (orderValue.ToLower().Equals(StlParserUtility.OrderLastModifiedDateBack.ToLower()))
+                else if (StringUtils.EqualsIgnoreCase(orderValue, StlParserUtility.OrderLastModifiedDateBack))
                 {
                     taxisType = TaxisType.OrderByLastModifiedDate;
                 }
-                else if (orderValue.ToLower().Equals(StlParserUtility.OrderHits.ToLower()))
+                else if (StringUtils.EqualsIgnoreCase(orderValue, StlParserUtility.OrderHits))
                 {
                     taxisType = TaxisType.OrderByHits;
                 }
-                else if (orderValue.ToLower().Equals(StlParserUtility.OrderHitsByDay.ToLower()))
+                else if (StringUtils.EqualsIgnoreCase(orderValue, StlParserUtility.OrderHitsByDay))
                 {
                     taxisType = TaxisType.OrderByHitsByDay;
                 }
-                else if (orderValue.ToLower().Equals(StlParserUtility.OrderHitsByWeek.ToLower()))
+                else if (StringUtils.EqualsIgnoreCase(orderValue, StlParserUtility.OrderHitsByWeek))
                 {
                     taxisType = TaxisType.OrderByHitsByWeek;
                 }
-                else if (orderValue.ToLower().Equals(StlParserUtility.OrderHitsByMonth.ToLower()))
+                else if (StringUtils.EqualsIgnoreCase(orderValue, StlParserUtility.OrderHitsByMonth))
                 {
                     taxisType = TaxisType.OrderByHitsByMonth;
                 }
-                else if (orderValue.ToLower().Equals(StlParserUtility.OrderRandom.ToLower()))
+                else if (StringUtils.EqualsIgnoreCase(orderValue, StlParserUtility.OrderRandom))
                 {
                     taxisType = TaxisType.OrderByRandom;
                 }

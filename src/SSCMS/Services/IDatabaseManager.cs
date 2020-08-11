@@ -18,11 +18,12 @@ namespace SSCMS.Services
         IContentTagRepository ContentTagRepository { get; }
         IDbCacheRepository DbCacheRepository { get; }
         IErrorLogRepository ErrorLogRepository { get; }
-        ILibraryFileRepository LibraryFileRepository { get; }
-        ILibraryGroupRepository LibraryGroupRepository { get; }
-        ILibraryImageRepository LibraryImageRepository { get; }
-        ILibraryTextRepository LibraryTextRepository { get; }
-        ILibraryVideoRepository LibraryVideoRepository { get; }
+        IMaterialAudioRepository MaterialAudioRepository { get; }
+        IMaterialArticleRepository MaterialArticleRepository { get; }
+        IMaterialFileRepository MaterialFileRepository { get; }
+        IMaterialGroupRepository MaterialGroupRepository { get; }
+        IMaterialImageRepository MaterialImageRepository { get; }
+        IMaterialVideoRepository MaterialVideoRepository { get; }
         ILogRepository LogRepository { get; }
         IPermissionsInRolesRepository PermissionsInRolesRepository { get; }
         IPluginConfigRepository PluginConfigRepository { get; }
@@ -33,6 +34,7 @@ namespace SSCMS.Services
         ISitePermissionsRepository SitePermissionsRepository { get; }
         ISiteRepository SiteRepository { get; }
         ISpecialRepository SpecialRepository { get; }
+        IStatRepository StatRepository { get; }
         ITableStyleRepository TableStyleRepository { get; }
         ITemplateLogRepository TemplateLogRepository { get; }
         ITemplateRepository TemplateRepository { get; }

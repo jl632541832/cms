@@ -4,9 +4,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
-using SSCMS.Core.Extensions;
 using SSCMS.Core.Utils;
 using SSCMS.Dto;
+using SSCMS.Extensions;
 using SSCMS.Repositories;
 using SSCMS.Services;
 using SSCMS.Utils;
@@ -42,7 +42,7 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Settings
 
             var site = await _siteRepository.GetAsync(request.SiteId);
             var families = FontUtils.GetFontFamilies();
-            var imageUrl = await _pathManager.ParseNavigationUrlAsync(site, site.WaterMarkImagePath, true);
+            var imageUrl = await _pathManager.ParseSiteUrlAsync(site, site.WaterMarkImagePath, true);
 
             return new GetResult
             {
@@ -69,7 +69,7 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Settings
 
             var fileName = Path.GetFileName(file.FileName);
 
-            var fileExtName = PathUtils.GetExtension(fileName).ToLower();
+            var fileExtName = StringUtils.ToLower(PathUtils.GetExtension(fileName));
             var localDirectoryPath = await _pathManager.GetUploadDirectoryPathAsync(site, fileExtName);
             var localFileName = _pathManager.GetUploadFileName(site, fileName);
             var filePath = PathUtils.Combine(localDirectoryPath, localFileName);

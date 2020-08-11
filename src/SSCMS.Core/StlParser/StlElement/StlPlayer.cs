@@ -121,8 +121,8 @@ namespace SSCMS.Core.StlParser.StlElement
 
             if (string.IsNullOrEmpty(playUrl)) return string.Empty;
 
-            playUrl = await parseManager.PathManager.ParseNavigationUrlAsync(pageInfo.Site, playUrl, pageInfo.IsLocal);
-            imageUrl = await parseManager.PathManager.ParseNavigationUrlAsync(pageInfo.Site, imageUrl, pageInfo.IsLocal);
+            playUrl = await parseManager.PathManager.ParseSiteUrlAsync(pageInfo.Site, playUrl, pageInfo.IsLocal);
+            imageUrl = await parseManager.PathManager.ParseSiteUrlAsync(pageInfo.Site, imageUrl, pageInfo.IsLocal);
 
             var extension = PathUtils.GetExtension(playUrl);
             var uniqueId = pageInfo.UniqueId;
@@ -172,7 +172,7 @@ namespace SSCMS.Core.StlParser.StlElement
 <div id='{ajaxElementId}'></div>
 <script type='text/javascript'>
 	jwplayer('{ajaxElementId}').setup({{
-        autostart: {isAutoPlay.ToString().ToLower()},
+        autostart: {StringUtils.ToLower(isAutoPlay.ToString())},
 		file: ""{playUrl}"",
 		width: ""{width}"",
 		height: ""{height}"",
@@ -193,13 +193,13 @@ namespace SSCMS.Core.StlParser.StlElement
                     imageHtml = $@"<img src=""{imageUrl}"" style=""{(width > 0 ? $"width:{width}px;" : string.Empty)}{(height > 0 ? $"height:{height}px;" : string.Empty)}"" />";
                 }
 
-                var swfUrl = SiteFilesAssets.GetUrl(pageInfo.ApiUrl, SiteFilesAssets.FlowPlayer.Swf);
+                var swfUrl = parseManager.PathManager.GetSiteFilesUrl(Resources.FlowPlayer.Swf);
                 return $@"
 <a href=""{playUrl}"" style=""display:block;{(width > 0 ? $"width:{width}px;" : string.Empty)}{(height > 0 ? $"height:{height}px;" : string.Empty)}"" id=""player_{ajaxElementId}"">{imageHtml}</a>
 <script language=""javascript"">
     flowplayer(""player_{ajaxElementId}"", ""{swfUrl}"", {{
         clip:  {{
-            autoPlay: {isAutoPlay.ToString().ToLower()}
+            autoPlay: {StringUtils.ToLower(isAutoPlay.ToString())}
         }}
     }});
 </script>

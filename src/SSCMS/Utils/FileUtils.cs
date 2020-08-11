@@ -62,16 +62,27 @@ namespace SSCMS.Utils
 	        return text;
 	    }
 
-        public static async Task WriteTextAsync(string filePath, string content)
+        public static string[] ReadAllLines(string filePath)
         {
-            await WriteTextAsync(filePath, content, Encoding.UTF8);
+            return File.ReadAllLines(filePath);
         }
 
-        public static async Task WriteTextAsync(string filePath, string content, Encoding encoding)
+        public static async Task WriteStreamAsync(string filePath, MemoryStream stream)
         {
             DirectoryUtils.CreateDirectoryIfNotExists(filePath);
 
-            var encodedText = encoding.GetBytes(content);
+            var encodedText = stream.ToArray();
+
+            await using var sourceStream = new FileStream(filePath,
+                FileMode.Create, FileAccess.ReadWrite, FileShare.None, bufferSize: 4096, useAsync: true);
+            await sourceStream.WriteAsync(encodedText, 0, encodedText.Length);
+        }
+
+        public static async Task WriteTextAsync(string filePath, string content)
+        {
+            DirectoryUtils.CreateDirectoryIfNotExists(filePath);
+
+            var encodedText = Encoding.UTF8.GetBytes(content);
 
             using var sourceStream = new FileStream(filePath,
                 FileMode.Create, FileAccess.ReadWrite, FileShare.None, bufferSize: 4096, useAsync: true);
@@ -275,7 +286,7 @@ namespace SSCMS.Utils
             {
                 using (var stream = File.OpenRead(filePath))
                 {
-                    return BitConverter.ToString(md5.ComputeHash(stream)).Replace("-", "‌​").ToLower();
+                    return StringUtils.ToLower(BitConverter.ToString(md5.ComputeHash(stream)).Replace("-", "‌​"));
                 }
             }
         }
@@ -403,7 +414,7 @@ namespace SSCMS.Utils
             var retVal = false;
             if (!string.IsNullOrEmpty(fileExtName))
             {
-                fileExtName = fileExtName.ToLower().Trim();
+                fileExtName = StringUtils.TrimAndToLower(fileExtName);
                 if (!fileExtName.StartsWith("."))
                 {
                     fileExtName = "." + fileExtName;
@@ -421,7 +432,7 @@ namespace SSCMS.Utils
             var retVal = false;
             if (!string.IsNullOrEmpty(fileExtName))
             {
-                fileExtName = fileExtName.ToLower().Trim();
+                fileExtName = StringUtils.TrimAndToLower(fileExtName);
                 if (!fileExtName.StartsWith("."))
                 {
                     fileExtName = "." + fileExtName;
@@ -439,12 +450,30 @@ namespace SSCMS.Utils
             return StringUtils.EqualsIgnoreCase(".zip", typeStr);
         }
 
+        public static bool IsWord(string fileExtName)
+        {
+            var retVal = false;
+            if (!string.IsNullOrEmpty(fileExtName))
+            {
+                fileExtName = StringUtils.TrimAndToLower(fileExtName);
+                if (!fileExtName.StartsWith("."))
+                {
+                    fileExtName = "." + fileExtName;
+                }
+                if (fileExtName == ".doc" || fileExtName == ".docx" || fileExtName == ".wps")
+                {
+                    retVal = true;
+                }
+            }
+            return retVal;
+        }
+
         public static bool IsFlash(string fileExtName)
         {
             var retVal = false;
             if (!string.IsNullOrEmpty(fileExtName))
             {
-                fileExtName = fileExtName.ToLower().Trim();
+                fileExtName = StringUtils.TrimAndToLower(fileExtName);
                 if (!fileExtName.StartsWith("."))
                 {
                     fileExtName = "." + fileExtName;
@@ -462,7 +491,7 @@ namespace SSCMS.Utils
             var retVal = false;
             if (!string.IsNullOrEmpty(fileExtName))
             {
-                fileExtName = fileExtName.ToLower().Trim();
+                fileExtName = StringUtils.TrimAndToLower(fileExtName);
                 if (!fileExtName.StartsWith("."))
                 {
                     fileExtName = "." + fileExtName;
@@ -480,7 +509,7 @@ namespace SSCMS.Utils
             var retVal = false;
             if (!string.IsNullOrEmpty(fileExtName))
             {
-                fileExtName = fileExtName.ToLower().Trim();
+                fileExtName = StringUtils.TrimAndToLower(fileExtName);
                 if (!fileExtName.StartsWith("."))
                 {
                     fileExtName = "." + fileExtName;

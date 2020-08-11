@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Data;
 using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
@@ -14,7 +13,7 @@ namespace SSCMS.Utils
 {
     public static class TranslateUtils
     {
-        public static T Get<T>(object value, T defaultValue = default(T))
+        public static T Get<T>(object value, T defaultValue = default)
         {
             switch (value)
             {
@@ -34,11 +33,11 @@ namespace SSCMS.Utils
             }
         }
 
-        public static T Get<T>(IDictionary<string, object> dict, string name, T defaultValue = default(T))
+        public static T Get<T>(IDictionary<string, object> dict, string name, T defaultValue = default)
         {
-            if (string.IsNullOrEmpty(name)) return default(T);
+            if (string.IsNullOrEmpty(name)) return default;
 
-            return dict.TryGetValue(name, out var extendValue) ? Get<T>(extendValue, defaultValue) : default(T);
+            return dict.TryGetValue(name, out var extendValue) ? Get(extendValue, defaultValue) : default;
         }
 
         public static T ToEnum<T>(string value, T defaultValue) where T : struct
@@ -49,11 +48,6 @@ namespace SSCMS.Utils
             }
 
             return Enum.TryParse<T>(value, true, out var result) ? result : defaultValue;
-        }
-
-        public static List<T> GetEnums<T>()
-        {
-            return Enum.GetValues(typeof(T)).Cast<T>().ToList();
         }
 
         public static int ToInt(string intStr, int defaultValue = 0)
@@ -91,15 +85,6 @@ namespace SSCMS.Utils
             return i;
         }
 
-        public static decimal ToDecimalWithNagetive(string intStr, decimal defaultValue = 0)
-        {
-            if (!decimal.TryParse(intStr?.Trim(), out var i))
-            {
-                i = defaultValue;
-            }
-            return i;
-        }
-
         public static bool ToBool(string boolStr)
         {
             if (!bool.TryParse(boolStr?.Trim(), out var boolean))
@@ -118,10 +103,9 @@ namespace SSCMS.Utils
             return boolean;
         }
 
-        public static bool? ToBoolNullable(string boolStr)
+        public static int Ceiling(int numerator, int denominator)
         {
-            if (string.IsNullOrEmpty(boolStr)) return null;
-            return ToBool(boolStr);
+            return Convert.ToInt32(Math.Ceiling((double) numerator / denominator));
         }
 
         public static DateTime ToDateTime(string dateTimeStr)
@@ -155,11 +139,6 @@ namespace SSCMS.Utils
             return datetime;
         }
 
-        public static string ToTwoCharString(int i)
-        {
-            return i >= 0 && i <= 9 ? $"0{i}" : i.ToString();
-        }
-
         public static Dictionary<string, object> ToDictionary(object obj)
         {
             if (obj == null) return new Dictionary<string, object>();
@@ -168,19 +147,6 @@ namespace SSCMS.Utils
             var props = obj.GetType().GetProperties();
             var pairDictionary = props.ToDictionary(x => x.Name, x => x.GetValue(obj, null));
             return pairDictionary;
-        }
-
-        public static IDictionary<string, object> ToDictionary(NameValueCollection collection)
-        {
-            var dict = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-            if (collection == null) return dict;
-
-            foreach (var key in collection.AllKeys)
-            {
-                dict[key] = collection[key];
-            }
-
-            return dict;
         }
 
         public static string ToSqlInStringWithoutQuote(ICollection collection)
@@ -225,54 +191,6 @@ namespace SSCMS.Utils
             return attributes;
         }
 
-        public static string NameValueCollectionToString(NameValueCollection attributes, char seperator = '&')
-        {
-            if (attributes == null || attributes.Count <= 0) return string.Empty;
-
-            var builder = new StringBuilder();
-            foreach (string key in attributes.Keys)
-            {
-                builder.Append(
-                    $@"{StringUtils.ValueToUrl(key)}={StringUtils.ValueToUrl(attributes[key])}{seperator}");
-            }
-            builder.Length--;
-            return builder.ToString();
-        }
-
-        public static NameValueCollection DictionaryToNameValueCollection(IDictionary<string, object> attributes)
-        {
-            var nvc = new NameValueCollection(StringComparer.OrdinalIgnoreCase);
-            if (attributes != null && attributes.Count > 0)
-            {
-                foreach (var key in attributes.Keys)
-                {
-                    var value = attributes[key];
-                    if (value != null)
-                    {
-                        nvc[key] = attributes[key].ToString();
-                    }
-                }
-            }
-            return nvc;
-        }
-
-        public static Dictionary<string, object> NameValueCollectionToDictionary(NameValueCollection  attributes)
-        {
-            var nvc = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-            if (attributes != null && attributes.Count > 0)
-            {
-                foreach (var key in attributes.AllKeys)
-                {
-                    var value = attributes[key];
-                    if (value != null)
-                    {
-                        nvc[key] = attributes[key].ToString();
-                    }
-                }
-            }
-            return nvc;
-        }
-
         public static string ToAttributesString(NameValueCollection attributes)
         {
             var builder = new StringBuilder();
@@ -306,33 +224,6 @@ namespace SSCMS.Utils
                 builder.Length--;
             }
             return builder.ToString();
-        }
-        
-        public static string NameValueCollectionToJsonString(NameValueCollection attributes)
-        {
-            var jsonString = new StringBuilder("{");
-            if (attributes != null && attributes.Count > 0)
-            {
-                foreach (string key in attributes.Keys)
-                {
-                    var value = attributes[key];
-                    value = value?.Replace("\\", "\\\\").Replace("\"", "\\\\\\\"").Replace("\r\n", string.Empty);
-                    jsonString.AppendFormat(@"""{0}"": ""{1}"",", key, value);
-                }
-                jsonString.Length--;
-            }
-            jsonString.Append("}");
-            return jsonString.ToString();
-        }
-
-        public static long GetKbSize(long byteSize)
-        {
-            long fileKbSize = Convert.ToUInt32(Math.Ceiling((double)byteSize / 1024));
-            if (fileKbSize == 0)
-            {
-                fileKbSize = 1;
-            }
-            return fileKbSize;
         }
 
         #region 汉字转拼音
@@ -469,13 +360,14 @@ namespace SSCMS.Utils
 
         #endregion
 
-        public static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
+        private static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
         {
             ContractResolver = new CamelCasePropertyNamesContractResolver(),
             Converters = new List<JsonConverter>
             {
                 new IsoDateTimeConverter {DateTimeFormat = "yyyy-MM-dd HH:mm:ss"}
-            }
+            },
+            Formatting = Formatting.Indented
         };
 
         public static string JsonSerialize(object obj)
@@ -517,26 +409,15 @@ namespace SSCMS.Utils
             }
         }
 
-        public static Dictionary<string, object> JsonGetDictionaryIgnorecase(JObject json)
+        public static Dictionary<string, object> ToDictionaryIgnoreCase(JObject json)
         {
-            return new Dictionary<string, object>(json.ToObject<IDictionary<string, object>>(), StringComparer.CurrentCultureIgnoreCase);
+            return new Dictionary<string, object>(json.ToObject<IDictionary<string, object>>(), StringComparer.OrdinalIgnoreCase);
         }
 
-        public static List<Dictionary<string, object>> DataTableToDictionaryList(DataTable dataTable)
+        public static Dictionary<string, object> ToDictionaryIgnoreCase(string json)
         {
-            var rows = new List<Dictionary<string, object>>();
-
-            foreach (DataRow dataRow in dataTable.Rows)
-            {
-                var row = new Dictionary<string, object>();
-                foreach (DataColumn col in dataTable.Columns)
-                {
-                    row.Add(col.ColumnName, dataRow[col]);
-                }
-                rows.Add(row);
-            }
-
-            return rows;
+            var defaultDict = new Dictionary<string, object>();
+            return new Dictionary<string, object>(JsonDeserialize(json, defaultDict), StringComparer.OrdinalIgnoreCase);
         }
 
         public static NameValueCollection NewIgnoreCaseNameValueCollection()
@@ -573,33 +454,53 @@ namespace SSCMS.Utils
         {
             if (string.IsNullOrEmpty(inputString)) return string.Empty;
 
-            var encryptor = new DesEncryptor
+            try
             {
-                InputString = inputString,
-                EncryptKey = secretKey
-            };
-            encryptor.DesEncrypt();
+                var encryptor = new DesEncryptor
+                {
+                    InputString = inputString,
+                    EncryptKey = secretKey
+                };
+                encryptor.DesEncrypt();
 
-            var retVal = encryptor.OutString;
-            retVal = retVal.Replace("+", "0add0").Replace("=", "0equals0").Replace("&", "0and0").Replace("?", "0question0").Replace("'", "0quote0").Replace("/", "0slash0");
+                var retVal = encryptor.OutString;
+                retVal = retVal.Replace("+", "0add0").Replace("=", "0equals0").Replace("&", "0and0").Replace("?", "0question0").Replace("'", "0quote0").Replace("/", "0slash0");
 
-            return retVal + Constants.EncryptStingIndicator;
+                return retVal + Constants.EncryptStingIndicator;
+            }
+            catch
+            {
+                // ignored
+            }
+
+            return string.Empty;
         }
 
         public static string DecryptStringBySecretKey(string inputString, string secretKey)
         {
             if (string.IsNullOrEmpty(inputString)) return string.Empty;
 
-            inputString = inputString.Replace(Constants.EncryptStingIndicator, string.Empty).Replace("0add0", "+").Replace("0equals0", "=").Replace("0and0", "&").Replace("0question0", "?").Replace("0quote0", "'").Replace("0slash0", "/");
-
-            var encryptor = new DesEncryptor
+            try
             {
-                InputString = inputString,
-                DecryptKey = secretKey
-            };
-            encryptor.DesDecrypt();
+                inputString = inputString.Replace(Constants.EncryptStingIndicator, string.Empty).Replace("0add0", "+")
+                    .Replace("0equals0", "=").Replace("0and0", "&").Replace("0question0", "?").Replace("0quote0", "'")
+                    .Replace("0slash0", "/");
 
-            return encryptor.OutString;
+                var encryptor = new DesEncryptor
+                {
+                    InputString = inputString,
+                    DecryptKey = secretKey
+                };
+                encryptor.DesDecrypt();
+
+                return encryptor.OutString;
+            }
+            catch
+            {
+                // ignored
+            }
+
+            return string.Empty;
         }
     }
 }

@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using SSCMS.Context;
+using SSCMS.Utils;
 
 namespace SSCMS.Core.Services
 {
     public partial class OldPluginManager
     {
-        public Dictionary<string, Func<IStlParseContext, string>> GetParses()
+        public Dictionary<string, Func<IParseContext, string>> GetParses()
         {
-            var elementsToParse = new Dictionary<string, Func<IStlParseContext, string>>();
+            var elementsToParse = new Dictionary<string, Func<IParseContext, string>>();
 
             foreach (var plugin in GetPlugins())
             {
@@ -15,7 +17,7 @@ namespace SSCMS.Core.Services
                 {
                     foreach (var elementName in plugin.StlElementsToParse.Keys)
                     {
-                        elementsToParse[elementName.ToLower()] = plugin.StlElementsToParse[elementName];
+                        elementsToParse[StringUtils.ToLower(elementName)] = plugin.StlElementsToParse[elementName];
                     }
                 }
             }

@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
@@ -17,10 +17,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
+using Senparc.CO2NET;
+using Senparc.CO2NET.RegisterServices;
 using SSCMS.Core.Extensions;
 using SSCMS.Core.Plugins.Extensions;
 using SSCMS.Services;
@@ -48,7 +51,7 @@ namespace SSCMS.Web
             var assemblies = new List<Assembly> { entryAssembly }.Concat(entryAssembly.GetReferencedAssemblies().Select(Assembly.Load));
 
             var settingsManager = services.AddSettingsManager(_config, _env.ContentRootPath, _env.WebRootPath, entryAssembly);
-            var pluginManager = services.AddPluginsAsync(_config, settingsManager).GetAwaiter().GetResult();
+            var pluginManager = services.AddPlugins(_config, settingsManager);
 
             services.AddCors(options =>
             {
@@ -80,6 +83,26 @@ namespace SSCMS.Web
                         ValidateIssuer = false,
                         ValidateAudience = false
                     };
+                    x.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = (context) => {
+                            if (!context.Request.Query.TryGetValue("access_token", out var values))
+                            {
+                                return Task.CompletedTask;
+                            }
+                            if (values.Count > 1)
+                            {
+                                return Task.CompletedTask;
+                            }
+                            var token = values.Single();
+                            if (string.IsNullOrWhiteSpace(token))
+                            {
+                                return Task.CompletedTask;
+                            }
+                            context.Token = token;
+                            return Task.CompletedTask;
+                        }
+                    };
                 });
 
             services.Configure<FormOptions>(options =>
@@ -97,6 +120,7 @@ namespace SSCMS.Web
 
             services.AddRepositories(assemblies);
             services.AddServices();
+            services.AddOpenManager(_config);
 
             services.AddLocalization(options => options.ResourcesPath = "Resources");
             services
@@ -110,6 +134,7 @@ namespace SSCMS.Web
                     options.SerializerSettings.DateFormatString = "yyyy-MM-dd HH:mm:ss";
                     options.SerializerSettings.ContractResolver
                         = new CamelCasePropertyNamesContractResolver();
+                    options.SerializerSettings.Converters.Add(new StringEnumConverter());
                 });
 
             services.Configure<RequestLocalizationOptions>(options =>
@@ -150,7 +175,7 @@ namespace SSCMS.Web
             });
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ISettingsManager settingsManager, IPluginManager pluginManager)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ISettingsManager settingsManager, IPluginManager pluginManager, IOptions<SenparcSetting> senparcSetting)
         {
             if (env.IsDevelopment())
             {
@@ -181,24 +206,22 @@ namespace SSCMS.Web
 
             //app.UseHttpsRedirection();
 
-            app.UseDefaultFiles(new DefaultFilesOptions
-            {
-                DefaultFileNames = new List<string>
-                {
-                    "index.html"
-                }
-            });
+            var options = new DefaultFilesOptions();
+            options.DefaultFileNames.Clear();
+            options.DefaultFileNames.Add("index.html");
+            app.UseDefaultFiles(options);
             app.UseStaticFiles();
-            if (env.IsDevelopment())
-            {
-                app.Map($"/{DirectoryUtils.SiteFilesDirectoryName}/assets", assets =>
-                {
-                    assets.UseStaticFiles(new StaticFileOptions
-                    {
-                        FileProvider = new PhysicalFileProvider(Path.Combine(settingsManager.ContentRootPath, "assets"))
-                    });
-                });
-            }
+
+            //if (env.IsDevelopment())
+            //{
+            //    app.Map($"/{DirectoryUtils.SiteFilesDirectoryName}/assets", assets =>
+            //    {
+            //        assets.UseStaticFiles(new StaticFileOptions
+            //        {
+            //            FileProvider = new PhysicalFileProvider(Path.Combine(settingsManager.ContentRootPath, "assets"))
+            //        });
+            //    });
+            //}
 
             var supportedCultures = new[]
             {
@@ -215,12 +238,12 @@ namespace SSCMS.Web
                 SupportedUICultures = supportedCultures
             });
 
-            app.UsePlugins(pluginManager);
-
             app.UseRouting();
 
             app.UseAuthentication();
             app.UseAuthorization();
+
+            app.UsePluginsAsync(settingsManager, pluginManager).GetAwaiter().GetResult();
 
             app.UseEndpoints(endpoints =>
             {
@@ -233,12 +256,21 @@ namespace SSCMS.Web
 
             app.UseRequestLocalization();
 
+            RegisterService.Start(senparcSetting.Value)
+
+                    //自动扫描自定义扩展缓存（二选一）
+                    .UseSenparcGlobal(true)
+
+                //指定自定义扩展缓存（二选一）
+                //.UseSenparcGlobal(false, () => GetExCacheStrategies(senparcSetting.Value))   
+                ;
+
             app.UseOpenApi();
             app.UseSwaggerUi3();
-            app.UseReDoc(options =>
+            app.UseReDoc(settings =>
             {
-                options.Path = "/docs";
-                options.DocumentPath = "/swagger/v1/swagger.json";
+                settings.Path = "/docs";
+                settings.DocumentPath = "/swagger/v1/swagger.json";
             });
         }
     }

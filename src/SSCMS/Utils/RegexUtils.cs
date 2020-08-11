@@ -12,10 +12,11 @@ namespace SSCMS.Utils
          * 所有链接：<a\s*.*?href=(?:"(?<url>[^"]*)"|'(?<url>[^']*)'|(?<url>\S+)).*?>
          * */
 
-        private static RegexOptions Options = ((RegexOptions.Singleline | RegexOptions.IgnoreCase) | RegexOptions.IgnorePatternWhitespace);
+        public static readonly RegexOptions Options = RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace;
 
         public static List<string> GetOriginalImageSrcs(string html)
         {
+            html = StringUtils.Replace(html, " data-src=", " src=");
             const string regex = "(img|input)[^><]*\\s+src\\s*=\\s*(?:\"(?<url>[^\"]*)\"|'(?<url>[^']*)'|(?<url>[^>\\s]*))";
             return GetContents("url", regex, html);
         }
