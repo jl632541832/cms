@@ -2,15 +2,15 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
+using SSCMS.Configuration;
 using SSCMS.Dto;
 using SSCMS.Repositories;
 using SSCMS.Services;
-using SSCMS.Utils;
 
 namespace SSCMS.Web.Controllers.Admin.Settings.Utilities
 {
     [OpenApiIgnore]
-    [Authorize(Roles = AuthTypes.Roles.Administrator)]
+    [Authorize(Roles = Types.Roles.Administrator)]
     [Route(Constants.ApiAdminPrefix)]
     public partial class UtilitiesCacheController : ControllerBase
     {
@@ -30,7 +30,7 @@ namespace SSCMS.Web.Controllers.Admin.Settings.Utilities
         [HttpGet, Route(Route)]
         public async Task<ActionResult<GetResult>> Get()
         {
-            if (!await _authManager.HasAppPermissionsAsync(AuthTypes.AppPermissions.SettingsUtilitiesCache))
+            if (!await _authManager.HasAppPermissionsAsync(Types.AppPermissions.SettingsUtilitiesCache))
             {
                 return Unauthorized();
             }
@@ -44,7 +44,7 @@ namespace SSCMS.Web.Controllers.Admin.Settings.Utilities
         [HttpPost, Route(Route)]
         public async Task<ActionResult<BoolResult>> ClearCache()
         {
-            if (!await _authManager.HasAppPermissionsAsync(AuthTypes.AppPermissions.SettingsUtilitiesCache))
+            if (!await _authManager.HasAppPermissionsAsync(Types.AppPermissions.SettingsUtilitiesCache))
             {
                 return Unauthorized();
             }

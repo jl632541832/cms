@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
+using SSCMS.Configuration;
 using SSCMS.Repositories;
 using SSCMS.Services;
-using SSCMS.Utils;
 
 namespace SSCMS.Web.Controllers.Admin
 {
@@ -14,14 +14,12 @@ namespace SSCMS.Web.Controllers.Admin
 
         private readonly ISettingsManager _settingsManager;
         private readonly IDatabaseManager _databaseManager;
-        private readonly IOldPluginManager _pluginManager;
         private readonly IConfigRepository _configRepository;
 
-        public SyncDatabaseController(ISettingsManager settingsManager, IDatabaseManager databaseManager, IOldPluginManager pluginManager, IConfigRepository configRepository)
+        public SyncDatabaseController(ISettingsManager settingsManager, IDatabaseManager databaseManager, IConfigRepository configRepository)
         {
             _settingsManager = settingsManager;
             _databaseManager = databaseManager;
-            _pluginManager = pluginManager;
             _configRepository = configRepository;
         }
 

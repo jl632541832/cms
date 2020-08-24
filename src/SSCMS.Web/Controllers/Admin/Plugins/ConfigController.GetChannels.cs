@@ -1,15 +1,17 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using SSCMS.Dto;
+using SSCMS.Configuration;
 
 namespace SSCMS.Web.Controllers.Admin.Plugins
 {
     public partial class ConfigController
     {
         [HttpPost, Route(RouteActionsGetChannels)]
-        public async Task<ActionResult<GetChannelsResult>> GetChannels([FromBody] SiteRequest request)
+        public async Task<ActionResult<GetChannelsResult>> GetChannels([FromBody] GetChannelsRequest request)
         {
-            if (!await _authManager.HasAppPermissionsAsync(AuthTypes.AppPermissions.PluginsManagement))
+            if (!await _authManager.HasAppPermissionsAsync(Types.AppPermissions.PluginsManagement))
             {
                 return Unauthorized();
             }
@@ -18,10 +20,28 @@ namespace SSCMS.Web.Controllers.Admin.Plugins
             var channel = await _channelRepository.GetAsync(request.SiteId);
             channel.Children = await _channelRepository.GetChildrenAsync(request.SiteId, request.SiteId);
 
+            var plugin = _pluginManager.GetPlugin(request.PluginId);
+            SiteConfig siteConfig = null;
+            if (plugin.SiteConfigs != null)
+            {
+                siteConfig = plugin.SiteConfigs.FirstOrDefault(x => x.SiteId == request.SiteId);
+            }
+
+            if (siteConfig == null)
+            {
+                siteConfig = new SiteConfig
+                {
+                    SiteId = request.SiteId,
+                    IsAllChannels = false,
+                    ChannelIds = new List<int>()
+                };
+            }
+
             return new GetChannelsResult
             {
                 SiteName = site.SiteName,
-                Channel = channel
+                Channel = channel,
+                SiteConfig = siteConfig
             };
         }
     }

@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using SSCMS.Configuration;
 using SSCMS.Core.Utils;
-using SSCMS.Utils;
 
 namespace SSCMS.Web
 {

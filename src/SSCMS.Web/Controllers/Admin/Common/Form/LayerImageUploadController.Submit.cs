@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using SSCMS.Configuration;
 using SSCMS.Enums;
 using SSCMS.Extensions;
 using SSCMS.Models;
@@ -58,7 +59,7 @@ namespace SSCMS.Web.Controllers.Admin.Common.Form
                     var thumbnailVirtualUrl = await _pathManager.GetVirtualUrlByPhysicalPathAsync(site, localSmallFilePath);
                     var thumbnailUrl = await _pathManager.ParseSiteUrlAsync(site, thumbnailVirtualUrl, true);
 
-                    ImageUtils.ResizeByMax(filePath, localSmallFilePath, request.ThumbWidth, request.ThumbHeight);
+                    _pathManager.ResizeImageByMax(filePath, localSmallFilePath, request.ThumbWidth, request.ThumbHeight);
 
                     if (request.IsLinkToOriginal)
                     {

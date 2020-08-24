@@ -20,8 +20,8 @@ namespace SSCMS.Core.Plugins
 
         public static class Api
         {
-            //private const string Host = "https://api.sscms.com";
-            private const string Host = "http://localhost:81";
+            private const string Host = "https://api.sscms.com";
+            // private const string Host = "http://localhost:81";
 
             public static string GetCliUrl(string relatedUrl)
             {
@@ -33,14 +33,14 @@ namespace SSCMS.Core.Plugins
         {
             private const string Host = "https://dl.sscms.com";
 
-            public static string GetCmsDownloadName(string version)
+            public static string GetCmsDownloadName(string osArchitecture, string version)
             {
-                return $"sscms-{version}-{Constants.OperatingSystem}";
+                return $"sscms-{version}-{osArchitecture}";
             }
 
-            public static string GetCmsDownloadUrl(string version)
+            public static string GetCmsDownloadUrl(string osArchitecture, string version)
             {
-                return $"{Host}/cms/{version}/{GetCmsDownloadName(version)}.zip";
+                return $"{Host}/cms/{version}/{GetCmsDownloadName(osArchitecture, version)}.zip";
             }
 
             public static string GetPluginsDownloadUrl(string pluginId, string version)
@@ -54,15 +54,15 @@ namespace SSCMS.Core.Plugins
                 return $"{pluginId}.{version}";
             }
 
-            public static void DownloadCms(IPathManager pathManager, string version)
+            public static void DownloadCms(IPathManager pathManager, string osArchitecture, string version)
             {
-                if (IsCmsDownload(pathManager, version))
+                if (IsCmsDownload(pathManager, osArchitecture, version))
                 {
                     return;
                 }
 
                 var packagesPath = pathManager.GetPackagesPath();
-                var name = GetCmsDownloadName(version);
+                var name = GetCmsDownloadName(osArchitecture, version);
 
                 var directoryNames = DirectoryUtils.GetDirectoryNames(packagesPath);
                 foreach (var directoryName in directoryNames.Where(directoryName => StringUtils.StartsWithIgnoreCase(directoryName, "sscms-")))
@@ -73,11 +73,11 @@ namespace SSCMS.Core.Plugins
                 var directoryPath = PathUtils.Combine(packagesPath, name);
                 DirectoryUtils.CreateDirectoryIfNotExists(directoryPath);
 
-                var filePath = PathUtils.Combine(directoryPath, $"{GetCmsDownloadName(version)}.zip");
+                var filePath = PathUtils.Combine(directoryPath, $"{GetCmsDownloadName(osArchitecture, version)}.zip");
                 FileUtils.WriteText(filePath, string.Empty);
                 using (var writer = File.OpenWrite(filePath))
                 {
-                    var client = new RestClient(GetCmsDownloadUrl(version));
+                    var client = new RestClient(GetCmsDownloadUrl(osArchitecture, version));
                     var request = new RestRequest();
                     request.ResponseWriter = responseStream =>
                     {
@@ -89,13 +89,13 @@ namespace SSCMS.Core.Plugins
                     client.DownloadData(request);
                 }
 
-                ZipUtils.ExtractZip(filePath, directoryPath);
+                pathManager.ExtractZip(filePath, directoryPath);
             }
 
-            public static bool IsCmsDownload(IPathManager pathManager, string version)
+            public static bool IsCmsDownload(IPathManager pathManager, string osArchitecture, string version)
             {
                 var packagesPath = pathManager.GetPackagesPath();
-                var name = GetCmsDownloadName(version);
+                var name = GetCmsDownloadName(osArchitecture, version);
 
                 var directoryPath = PathUtils.Combine(packagesPath, name);
 

@@ -5,7 +5,9 @@ using Mono.Options;
 using Semver;
 using SSCMS.Cli.Abstractions;
 using SSCMS.Cli.Core;
+using SSCMS.Configuration;
 using SSCMS.Core.Plugins;
+using SSCMS.Plugins;
 using SSCMS.Repositories;
 using SSCMS.Services;
 using SSCMS.Utils;
@@ -50,7 +52,7 @@ namespace SSCMS.Cli.Jobs
                     }
                 },
                 {
-                    "h|help", "命令说明",
+                    "h|help", "Display help",
                     v => _isHelp = v != null
                 }
             };
@@ -65,7 +67,7 @@ namespace SSCMS.Cli.Jobs
             Console.WriteLine();
         }
 
-        public async Task ExecuteAsync(IJobContext context)
+        public async Task ExecuteAsync(IPluginJobContext context)
         {
             if (!CliUtils.ParseArgs(_options, context.Args)) return;
 
@@ -101,8 +103,8 @@ namespace SSCMS.Cli.Jobs
             if (!proceed) return;
 
             Console.WriteLine($"Downloading {result.Cms.Version}...");
-            CloudUtils.Dl.DownloadCms(_pathManager, result.Cms.Version);
-            var name = CloudUtils.Dl.GetCmsDownloadName(result.Cms.Version);
+            CloudUtils.Dl.DownloadCms(_pathManager, _settingsManager.OSArchitecture, result.Cms.Version);
+            var name = CloudUtils.Dl.GetCmsDownloadName(_settingsManager.OSArchitecture, result.Cms.Version);
             var packagePath = _pathManager.GetPackagesPath(name);
 
             var offlinePath = PathUtils.Combine(_settingsManager.ContentRootPath, "app_offline.htm");

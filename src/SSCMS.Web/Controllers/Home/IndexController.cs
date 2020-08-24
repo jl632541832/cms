@@ -7,26 +7,23 @@ using SSCMS.Configuration;
 using SSCMS.Extensions;
 using SSCMS.Repositories;
 using SSCMS.Services;
-using SSCMS.Utils;
 
 namespace SSCMS.Web.Controllers.Home
 {
     [OpenApiIgnore]
-    [Authorize(Roles = AuthTypes.Roles.User)]
+    [Authorize(Roles = Types.Roles.User)]
     [Route(Constants.ApiHomePrefix)]
     public partial class IndexController : ControllerBase
     {
         private const string Route = "index";
 
         private readonly IAuthManager _authManager;
-        private readonly IOldPluginManager _pluginManager;
         private readonly IConfigRepository _configRepository;
         private readonly IUserMenuRepository _userMenuRepository;
 
-        public IndexController(IAuthManager authManager, IOldPluginManager pluginManager, IConfigRepository configRepository, IUserMenuRepository userMenuRepository)
+        public IndexController(IAuthManager authManager, IConfigRepository configRepository, IUserMenuRepository userMenuRepository)
         {
             _authManager = authManager;
-            _pluginManager = pluginManager;
             _configRepository = configRepository;
             _userMenuRepository = userMenuRepository;
         }
@@ -74,15 +71,12 @@ namespace SSCMS.Web.Controllers.Home
                 });
             }
 
-            var defaultPageUrl = await _pluginManager.GetHomeDefaultPageUrlAsync();
-
             return new GetResult
             {
                 User = user,
                 HomeTitle = config.HomeTitle,
                 HomeLogoUrl = config.HomeLogoUrl,
-                Menus = menus,
-                DefaultPageUrl = defaultPageUrl
+                Menus = menus
             };
         }
     }
