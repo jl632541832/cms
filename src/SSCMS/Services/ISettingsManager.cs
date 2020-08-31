@@ -15,8 +15,8 @@ namespace SSCMS.Services
         string OSDescription { get; }
         bool Containerized { get; }
         int CPUCores { get; }
-        bool IsNightlyUpdate { get; }
         bool IsProtectData { get; }
+        bool IsDisablePlugins { get; }
         string SecurityKey { get; }
         string ApiHost { get; }
         DatabaseType DatabaseType { get; }
@@ -26,7 +26,7 @@ namespace SSCMS.Services
         IRedis Redis { get; }
         string Encrypt(string inputString, string securityKey = null);
         string Decrypt(string inputString, string securityKey = null);
-        void SaveSettings(bool isNightlyUpdate, bool isProtectData, DatabaseType databaseType, string databaseConnectionString, string redisConnectionString);
+        void SaveSettings(bool isProtectData, bool isDisablePlugins, DatabaseType databaseType, string databaseConnectionString, string redisConnectionString);
         IServiceProvider BuildServiceProvider();
     }
 }

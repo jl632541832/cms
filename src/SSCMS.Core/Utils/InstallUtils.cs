@@ -6,18 +6,18 @@ namespace SSCMS.Core.Utils
 {
     public static class InstallUtils
     {
-        public static void SaveSettings(string contentRootPath, bool isNightlyUpdate, bool isProtectData, string securityKey, string databaseType, string databaseConnectionString, string redisConnectionString)
+        public static void SaveSettings(string contentRootPath, bool isProtectData, bool isDisablePlugins, string securityKey, string databaseType, string databaseConnectionString, string redisConnectionString)
         {
             var path = PathUtils.Combine(contentRootPath, Constants.ConfigFileName);
 
             var json = $@"
 {{
-  ""IsNightlyUpdate"": {StringUtils.ToLower(isNightlyUpdate.ToString())},
   ""IsProtectData"": {StringUtils.ToLower(isProtectData.ToString())},
+  ""IsDisablePlugins"": {StringUtils.ToLower(isDisablePlugins.ToString())},
   ""SecurityKey"": ""{securityKey}"",
   ""Database"": {{
     ""Type"": ""{databaseType}"",
-    ""ConnectionString"": ""{databaseConnectionString}""
+    ""ConnectionString"": ""{StringUtils.ToJsonString(databaseConnectionString)}""
   }},
   ""Redis"": {{
     ""ConnectionString"": ""{redisConnectionString}""
@@ -25,6 +25,13 @@ namespace SSCMS.Core.Utils
 }}";
 
             FileUtils.WriteText(path, json.Trim());
+
+            var webConfigPath = PathUtils.Combine(contentRootPath, "Web.config");
+            if (FileUtils.IsFileExists(webConfigPath))
+            {
+                var webConfigContent = FileUtils.ReadText(webConfigPath);
+                FileUtils.WriteText(webConfigPath, webConfigContent);
+            }
         }
 
         public static void Init(string contentRootPath)
