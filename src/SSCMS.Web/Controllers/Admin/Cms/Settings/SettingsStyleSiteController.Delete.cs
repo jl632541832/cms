@@ -1,8 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using SSCMS.Configuration;
-using SSCMS.Utils;
 
 namespace SSCMS.Web.Controllers.Admin.Cms.Settings
 {
@@ -22,10 +20,6 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Settings
             var tableName = _siteRepository.TableName;
             var relatedIdentities = _tableStyleRepository.GetRelatedIdentities(request.SiteId);
             var styles = await _tableStyleRepository.GetTableStylesAsync(tableName, relatedIdentities);
-            foreach (var style in styles)
-            {
-                style.Rules = TranslateUtils.JsonDeserialize<List<InputStyleRule>>(style.RuleValues);
-            }
 
             return new DeleteResult
             {

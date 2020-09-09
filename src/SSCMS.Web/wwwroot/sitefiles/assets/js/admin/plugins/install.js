@@ -12,7 +12,6 @@ var data = utils.init({
   pluginPathDict: null,
 
   percentage: 0,
-  interval: 500,
 
   listPackages: [],
   listPackageIds: [],
@@ -31,12 +30,9 @@ var methods = {
     var $this = this;
 
     setInterval(function () {
-      if ($this.percentage > 80) {
-        $this.interval = 3000;
-      }
       if ($this.percentage > 95) return;
       $this.percentage += 1;
-    }, this.interval);
+    }, 1000);
 
     $api.get($url, {
       params: {
@@ -105,18 +101,20 @@ var methods = {
     $api.post($urlActionsRestart, {
       isDisablePlugins: callback ? true : false
     }).then(function (response) {
-      if (callback) {
-        callback();
-      } else {
-        $this.percentage = 100;
-        utils.alertSuccess({
-          title: '插件' + $this.pageType + '成功',
-          text: '插件' + $this.pageType + '成功，系统需要重载页面',
-          callback: function() {
-            window.top.location.reload(true);
-          }
-        });
-      }
+      setTimeout(function () {
+        if (callback) {
+          callback();
+        } else {
+          $this.percentage = 100;
+          utils.alertSuccess({
+            title: '插件' + $this.pageType + '成功',
+            text: '插件' + $this.pageType + '成功，系统需要重载页面',
+            callback: function() {
+              window.top.location.reload(true);
+            }
+          });
+        }
+      }, 30000);
     }).catch(function (error) {
       utils.error(error);
     });
