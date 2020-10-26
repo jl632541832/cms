@@ -28,6 +28,7 @@ var data = utils.init({
   editTaxisTypes: [],
   editEditor: null,
   styles: [],
+  siteUrl: null,
   isTemplateEditable: false,
 
   deletePanel: false,
@@ -125,6 +126,9 @@ var methods = {
       $this.commandsWidth = res.commandsWidth;
       $this.isTemplateEditable = res.isTemplateEditable;
       $this.expandedChannelIds = expandedChannelIds ? expandedChannelIds : [$this.siteId];
+      $this.editLinkTypes = res.linkTypes;
+      $this.editTaxisTypes = res.taxisTypes;
+      $this.siteUrl = res.siteUrl;
 
       if (message) {
         utils.success(message);
@@ -147,9 +151,11 @@ var methods = {
       if (!$this.form.groupNames) {
         $this.form.groupNames = [];
       }
-      $this.editLinkTypes = res.linkTypes;
-      $this.editTaxisTypes = res.taxisTypes;
       $this.styles = res.styles;
+      $this.form.filePath = res.filePath;
+      $this.form.channelFilePathRule = res.channelFilePathRule;
+      $this.form.contentFilePathRule = res.contentFilePathRule;
+
       $this.editPanel = true;
       setTimeout(function () {
         $this.loadEditor();
@@ -455,26 +461,6 @@ var methods = {
       if (valid) {
         $this.apiEdit();
       }
-    });
-  },
-
-  btnOrderClick: function(row, isUp) {
-    var $this = this;
-
-    utils.loading(this, true);
-    $api.post($url + '/actions/order', {
-      siteId: this.siteId,
-      channelId: row.value,
-      parentId: row.parentId,
-      taxis: row.taxis,
-      isUp: isUp
-    }).then(function (response) {
-      var res = response.data;
-      
-      $this.apiList('栏目排序成功!', res);
-    }).catch(function (error) {
-      utils.loading($this, false);
-      utils.error(error);
     });
   },
 
