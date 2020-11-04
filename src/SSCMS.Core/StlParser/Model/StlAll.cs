@@ -57,10 +57,6 @@ namespace SSCMS.Core.StlParser.Model
                 typeof(StlFile)
             },
             {
-                StlFlash.ElementName,
-                typeof(StlFlash)
-            },
-            {
                 StlFocusViewer.ElementName,
                 typeof(StlFocusViewer)
             },
@@ -129,6 +125,10 @@ namespace SSCMS.Core.StlParser.Model
                 typeof(StlPageSqlContents)
             },
             {
+                StlPdf.ElementName,
+                typeof(StlPdf)
+            },
+            {
                 StlPlayer.ElementName,
                 typeof(StlPlayer)
             },
@@ -139,6 +139,10 @@ namespace SSCMS.Core.StlParser.Model
             {
                 StlQueryString.ElementName,
                 typeof(StlQueryString)
+            },
+            {
+                StlRequest.ElementName,
+                typeof(StlRequest)
             },
             {
                 StlSearch.ElementName,
@@ -171,6 +175,10 @@ namespace SSCMS.Core.StlParser.Model
             {
                 StlTags.ElementName,
                 typeof(StlTags)
+            },
+            {
+                StlUser.ElementName,
+                typeof(StlUser)
             },
             {
                 StlValue.ElementName,

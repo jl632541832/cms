@@ -39,8 +39,8 @@ namespace SSCMS.Core.StlParser.StlElement
             var funcName = string.Empty;
             var title = string.Empty;
             var url = string.Empty;
-            var width = 0;
-            var height = 0;
+            var width = string.Empty;
+            var height = string.Empty;
             var shadeClose = true;
             var offset = "auto";
 
@@ -62,11 +62,19 @@ namespace SSCMS.Core.StlParser.StlElement
                 }
                 else if (StringUtils.EqualsIgnoreCase(name, Width))
                 {
-                    width = TranslateUtils.ToInt(value);
+                    width = value;
+                    if (!string.IsNullOrEmpty(width) && char.IsDigit(width[^1]))
+                    {
+                        width += "px";
+                    }
                 }
                 else if (StringUtils.EqualsIgnoreCase(name, Height))
                 {
-                    height = TranslateUtils.ToInt(value);
+                    height = value;
+                    if (!string.IsNullOrEmpty(height) && char.IsDigit(height[^1]))
+                    {
+                        height += "px";
+                    }
                 }
                 else if (StringUtils.EqualsIgnoreCase(name, ShadeClose))
                 {
@@ -75,6 +83,10 @@ namespace SSCMS.Core.StlParser.StlElement
                 else if (StringUtils.EqualsIgnoreCase(name, Offset))
                 {
                     offset = value;
+                    if (!string.IsNullOrEmpty(offset) && char.IsDigit(offset[^1]))
+                    {
+                        offset += "px";
+                    }
                 }
             }
 
@@ -82,13 +94,13 @@ namespace SSCMS.Core.StlParser.StlElement
         }
 
         private static async Task<string> ParseImplAsync(IParseManager parseManager, string funcName, string title,
-            string url, int width, int height, bool shadeClose, string offset)
+            string url, string width, string height, bool shadeClose, string offset)
         {
             var pageInfo = parseManager.PageInfo;
             var contextInfo = parseManager.ContextInfo;
 
-            await pageInfo.AddPageBodyCodeIfNotExistsAsync(ParsePage.Const.Jquery);
-            await pageInfo.AddPageBodyCodeIfNotExistsAsync(ParsePage.Const.Layer);
+            await pageInfo.AddPageHeadCodeIfNotExistsAsync(ParsePage.Const.Jquery);
+            await pageInfo.AddPageHeadCodeIfNotExistsAsync(ParsePage.Const.Layer);
 
             var type = 1;
             var content = string.Empty;
@@ -101,20 +113,20 @@ namespace SSCMS.Core.StlParser.StlElement
             {
                 var innerBuilder = new StringBuilder(contextInfo.InnerHtml);
                 await parseManager.ParseInnerContentAsync(innerBuilder);
-                var uniqueId = "Layer_" + pageInfo.UniqueId;
-                pageInfo.BodyCodes.Add(uniqueId,
-                    $@"<div id=""{uniqueId}"" style=""display: none"">{innerBuilder}</div>");
-                content = $"$('#{uniqueId}')";
+                var elementId = StringUtils.GetElementId();
+                pageInfo.BodyCodes.Add(elementId,
+                    $@"<div id=""{elementId}"" style=""display: none"">{innerBuilder}</div>");
+                content = $"$('#{elementId}')";
             }
 
             var area = string.Empty;
-            if (width > 0 || height > 0)
+            if (!string.IsNullOrEmpty(width) || !string.IsNullOrEmpty(height))
             {
-                area = height == 0
+                area = string.IsNullOrEmpty(height)
                     ? $@"
-area: '{width}px',"
+area: '{width}',"
                     : $@"
-area: ['{width}px', '{height}px'],";
+area: ['{width}', '{height}'],";
             }
 
             var offsetStr = StringUtils.StartsWith(offset, "[") ? offset : $"'{offset}'";

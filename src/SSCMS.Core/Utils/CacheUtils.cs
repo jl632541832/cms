@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using SSCMS.Services;
 using SSCMS.Utils;
 
@@ -6,8 +7,8 @@ namespace SSCMS.Core.Utils
 {
     public class CacheUtils
     {
-        private readonly ICacheManager<Process> _cacheManager;
-        public CacheUtils(ICacheManager<Process> cacheManager)
+        private readonly ICacheManager _cacheManager;
+        public CacheUtils(ICacheManager cacheManager)
         {
             _cacheManager = cacheManager;
         }
@@ -30,7 +31,7 @@ namespace SSCMS.Core.Utils
 
             //var cache = CacheUtils.Get<Process>(guid);
             var cacheKey = GetProcessCacheKey(guid);
-            var process = _cacheManager.Get(cacheKey);
+            var process = _cacheManager.Get<Process>(cacheKey);
             if (process == null)
             {
                 process = new Process
@@ -55,7 +56,7 @@ namespace SSCMS.Core.Utils
         public Process GetProcess(string guid)
         {
             var cacheKey = GetProcessCacheKey(guid);
-            var process = _cacheManager.Get(cacheKey) ?? new Process
+            var process = _cacheManager.Get<Process>(cacheKey) ?? new Process
             {
                 Total = 100,
                 Current = 0,
@@ -67,7 +68,7 @@ namespace SSCMS.Core.Utils
 
         public static string GetPathKey(string filePath)
         {
-            return $"ss:{StringUtils.ToLower(filePath)}";
+            return $"ss:{StringUtils.ToLower(filePath)}:{DateUtils.GetUnixTimestamp(File.GetLastWriteTime(filePath))}";
         }
 
         public static string GetClassKey(Type type, params string[] values)

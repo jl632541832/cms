@@ -18,10 +18,10 @@ namespace SSCMS.Core.Repositories
     public partial class UserRepository : IUserRepository
     {
         private readonly Repository<User> _repository;
-        private readonly ICacheManager<bool> _cacheManager;
+        private readonly ICacheManager _cacheManager;
         private readonly IConfigRepository _configRepository;
 
-        public UserRepository(ISettingsManager settingsManager, ICacheManager<bool> cacheManager, IConfigRepository configRepository)
+        public UserRepository(ISettingsManager settingsManager, ICacheManager cacheManager, IConfigRepository configRepository)
         {
             _repository = new Repository<User>(settingsManager.Database, settingsManager.Redis);
             _cacheManager = cacheManager;
@@ -484,7 +484,7 @@ namespace SSCMS.Core.Repositories
                 }
             }
 
-            var userEntity = await _repository.GetAsync(user.Id);
+            var userEntity = await GetByUserIdAsync(user.Id);
 
             if (!CheckPassword(password, isPasswordMd5, userEntity.Password, userEntity.PasswordFormat, userEntity.PasswordSalt))
             {

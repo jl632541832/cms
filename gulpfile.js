@@ -8,10 +8,10 @@ const rename = require('gulp-rename');
 const replace = require('gulp-string-replace');
 const filter = require('gulp-filter');
 const runSequence = require('gulp4-run-sequence');
+const ALY = require('aliyun-sdk');
 
-var os = '';
-
-const version = process.env.PRODUCTVERSION ? (process.env.PRODUCTVERSION + '-') : '';
+let os = '';
+const version = process.env.PRODUCTVERSION || '';
 const timestamp = (new Date()).getTime();
 let publishDir = '';
 let htmlDict = {};
@@ -64,6 +64,25 @@ function transform(file, html) {
 
   file.contents = Buffer.from(result, 'utf8');
   return file;
+}
+
+function writeOss(bucket, key, fileName) {
+  var ossStream = require('aliyun-oss-upload-stream')(new ALY.OSS({
+    accessKeyId: process.env.OSS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.OSS_SECRET_ACCESS_KEY,
+    endpoint: 'http://oss-cn-beijing.aliyuncs.com',
+    apiVersion: '2013-10-15'
+  }));
+
+  var upload = ossStream.upload({
+    Bucket: bucket,
+    Key: key
+  });
+  
+  upload.minPartSize(1048576);
+  
+  var read = fs.createReadStream(`./publish/dist/${fileName}`);
+  read.pipe(upload);
 }
 
 // build tasks
@@ -133,7 +152,6 @@ gulp.task('build-clean', function(){
 
 gulp.task("build-osx-x64", async function () {
   os = 'osx-x64';
-  console.log("build version: " + version + os);
   return runSequence(
       "build-src",
       "build-sln",
@@ -145,7 +163,6 @@ gulp.task("build-osx-x64", async function () {
 
 gulp.task("build-linux-x64", async function () {
   os = 'linux-x64';
-  console.log("build version: " + version + os);
   return runSequence(
       "build-src",
       "build-sln",
@@ -157,7 +174,6 @@ gulp.task("build-linux-x64", async function () {
 
 gulp.task("build-win-x64", async function () {
   os = 'win-x64';
-  console.log("build version: " + version + os);
   return runSequence(
       "build-src",
       "build-sln",
@@ -169,7 +185,6 @@ gulp.task("build-win-x64", async function () {
 
 gulp.task("build-win-x86", async function () {
   os = 'win-x86';
-  console.log("build version: " + version + os);
   return runSequence(
       "build-src",
       "build-sln",
@@ -234,8 +249,7 @@ gulp.task("copy-js", function () {
 
 gulp.task("copy-osx-x64", async function (callback) {
   os = 'osx-x64';
-  publishDir = './publish/sscms-' + version + os;
-  console.log("publish dir: " + publishDir);
+  publishDir = `./publish/sscms-${version}-${os}`;
 
   return runSequence(
     "copy-files",
@@ -247,8 +261,7 @@ gulp.task("copy-osx-x64", async function (callback) {
 
 gulp.task("copy-linux-x64", async function (callback) {
   os = 'linux-x64';
-  publishDir = './publish/sscms-' + version + os;
-  console.log("publish dir: " + publishDir);
+  publishDir = `./publish/sscms-${version}-${os}`;
 
   return runSequence(
     "copy-files",
@@ -260,8 +273,7 @@ gulp.task("copy-linux-x64", async function (callback) {
 
 gulp.task("copy-win-x64", async function (callback) {
   os = 'win-x64';
-  publishDir = './publish/sscms-' + version + os;
-  console.log("publish dir: " + publishDir);
+  publishDir = `./publish/sscms-${version}-${os}`;
 
   return runSequence(
     "copy-files",
@@ -273,8 +285,7 @@ gulp.task("copy-win-x64", async function (callback) {
 
 gulp.task("copy-win-x86", async function (callback) {
   os = 'win-x86';
-  publishDir = './publish/sscms-' + version + os;
-  console.log("publish dir: " + publishDir);
+  publishDir = `./publish/sscms-${version}-${os}`;
 
   return runSequence(
     "copy-files",
@@ -282,4 +293,35 @@ gulp.task("copy-win-x86", async function (callback) {
     "copy-css",
     "copy-js"
   );
+});
+
+gulp.task("publish-osx-x64-zip", async function () {
+  writeOss(process.env.OSS_BUCKET_DL, `cms/${version}/sscms-${version}-osx-x64.zip`, `sscms-${version}-osx-x64.zip`);
+});
+
+gulp.task("publish-linux-x64-tgz", async function () {
+  writeOss(process.env.OSS_BUCKET_DL, `cms/${version}/sscms-${version}-linux-x64.tar.gz`, `sscms-${version}-linux-x64.tar.gz`);
+});
+
+gulp.task("publish-linux-x64-zip", async function () {
+  writeOss(process.env.OSS_BUCKET_DL, `cms/${version}/sscms-${version}-linux-x64.zip`, `sscms-${version}-linux-x64.zip`);
+});
+
+gulp.task("publish-win-x64-zip", async function () {
+  writeOss(process.env.OSS_BUCKET_DL, `cms/${version}/sscms-${version}-win-x64.zip`, `sscms-${version}-win-x64.zip`);
+});
+
+gulp.task("publish-win-x86-zip", async function () {
+  writeOss(process.env.OSS_BUCKET_DL, `cms/${version}/sscms-${version}-win-x86.zip`, `sscms-${version}-win-x86.zip`);
+
+  var fileName = 'ci.js';
+  var date = new Date();
+  date.setHours(date.getHours() + 8);
+  var json = `var ci = {
+  version: '${version}',
+  releaseDate: '${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日'
+};`;
+  
+  fs.writeFileSync(`./publish/dist/${fileName}`, json);
+  writeOss(process.env.OSS_BUCKET_WWW, `assets/js/${fileName}`, fileName);
 });
