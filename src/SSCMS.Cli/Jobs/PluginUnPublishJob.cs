@@ -61,10 +61,10 @@ namespace SSCMS.Cli.Jobs
             }
 
             bool success;
-            (success, failureMessage) = _apiService.UnPluginsPublish(context.Extras[0]);
+            (success, failureMessage) = _apiService.PluginUnPublish(context.Extras[0]);
             if (success)
             {
-                await WriteUtils.PrintSuccessAsync($"Unpublished {context.Extras[0]}.");
+                await WriteUtils.PrintSuccessAsync($"Plugin {context.Extras[0]} unpublished.");
             }
             else
             {

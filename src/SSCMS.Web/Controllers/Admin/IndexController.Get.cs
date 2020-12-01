@@ -200,20 +200,20 @@ namespace SSCMS.Web.Controllers.Admin
 
                         switchMenus.Add(new Menu
                         {
+                            Id = "site_switch_select",
+                            IconClass = "ion-android-funnel",
+                            Link = _pathManager.GetAdminUrl(SitesLayerSelectController.Route),
+                            Target = "_layer",
+                            //Text = _local["Select site"]
+                            Text = "选择站点"
+                        });
+                        switchMenus.Add(new Menu
+                        {
                             Id = "site_switch_all",
                             IconClass = "ion-clock",
                             //Text = _local["Recently site"],
                             Text = "最近访问",
                             Children = allSiteMenus.ToArray()
-                        });
-                        switchMenus.Add(new Menu
-                        {
-                            Id = "site_switch_select",
-                            IconClass = "ion-checkmark",
-                            Link = _pathManager.GetAdminUrl(SitesLayerSelectController.Route),
-                            Target = "_layer",
-                            //Text = _local["Select site"]
-                            Text = "选择站点"
                         });
 
                         menus.Add(new Menu
@@ -246,7 +246,7 @@ namespace SSCMS.Web.Controllers.Admin
             return new GetResult
             {
                 Value = true,
-                Version = _settingsManager.Version,
+                CmsVersion = _settingsManager.Version,
                 OSArchitecture = _settingsManager.OSArchitecture,
                 AdminLogoUrl = config.AdminLogoUrl,
                 AdminTitle = config.AdminTitle,

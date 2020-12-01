@@ -36,7 +36,6 @@ namespace SSCMS.Core.StlParser.StlElement
         protected static async Task<string> ParseElementAsync(IParseManager parseManager, ListInfo listInfo, List<KeyValuePair<int, Content>> dataSource)
         {
             var pageInfo = parseManager.PageInfo;
-            var contextInfo = parseManager.ContextInfo;
 
             if (dataSource == null || dataSource.Count == 0) return string.Empty;
 
@@ -64,7 +63,9 @@ namespace SSCMS.Core.StlParser.StlElement
                     var content = dataSource[i];
 
                     pageInfo.ContentItems.Push(content);
-                    var templateString = isAlternative ? listInfo.AlternatingItemTemplate : listInfo.ItemTemplate;
+                    var templateString = isAlternative && i % 2 == 1
+                        ? listInfo.AlternatingItemTemplate
+                        : listInfo.ItemTemplate;
                     builder.Append(await TemplateUtility.GetContentsItemTemplateStringAsync(templateString, listInfo.SelectedItems, listInfo.SelectedValues, string.Empty, parseManager, ParseType.Content));
 
                     if (isSeparator && i != dataSource.Count - 1)
@@ -113,7 +114,7 @@ namespace SSCMS.Core.StlParser.StlElement
 
                             pageInfo.ContentItems.Push(content);
 
-                            var templateString = isAlternative ? listInfo.AlternatingItemTemplate : listInfo.ItemTemplate;
+                            var templateString = isAlternative && itemIndex % 2 == 1 ? listInfo.AlternatingItemTemplate : listInfo.ItemTemplate;
                             cellHtml = await TemplateUtility.GetContentsItemTemplateStringAsync(templateString, listInfo.SelectedItems, listInfo.SelectedValues, string.Empty, parseManager, ParseType.Content);
                         }
                         tr.AddCell(cellHtml, cellAttributes);

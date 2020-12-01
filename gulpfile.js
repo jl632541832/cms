@@ -11,7 +11,7 @@ const runSequence = require('gulp4-run-sequence');
 const ALY = require('aliyun-sdk');
 
 let os = '';
-const version = process.env.PRODUCTVERSION || '';
+const version = process.env.PRODUCTVERSION || '7.0.0';
 const timestamp = (new Date()).getTime();
 let publishDir = '';
 let htmlDict = {};
@@ -150,17 +150,6 @@ gulp.task('build-clean', function(){
   return del([`./build-${os}/src/SSCMS.Web/Pages/ss-admin/**`, `./build-${os}/src/SSCMS.Web/Pages/home/**`], {force:true});
 });
 
-gulp.task("build-osx-x64", async function () {
-  os = 'osx-x64';
-  return runSequence(
-      "build-src",
-      "build-sln",
-      "build-ss-admin",
-      "build-home",
-      "build-clean"
-  );
-});
-
 gulp.task("build-linux-x64", async function () {
   os = 'linux-x64';
   return runSequence(
@@ -247,16 +236,11 @@ gulp.task("copy-js", function () {
     .pipe(gulp.dest(publishDir + "/wwwroot/sitefiles"));
 });
 
-gulp.task("copy-osx-x64", async function (callback) {
-  os = 'osx-x64';
-  publishDir = `./publish/sscms-${version}-${os}`;
-
-  return runSequence(
-    "copy-files",
-    "copy-sscms-linux",
-    "copy-css",
-    "copy-js"
-  );
+gulp.task("replace-localhost", function () {
+  return gulp
+    .src("./src/SSCMS.Web/wwwroot/sitefiles/assets/js/cloud.js")
+    .pipe(replace('http://localhost:6060/', 'https://api.sscms.com/'))
+    .pipe(gulp.dest(publishDir + "/wwwroot/sitefiles/assets/js"));
 });
 
 gulp.task("copy-linux-x64", async function (callback) {
@@ -267,7 +251,8 @@ gulp.task("copy-linux-x64", async function (callback) {
     "copy-files",
     "copy-sscms-linux",
     "copy-css",
-    "copy-js"
+    "copy-js",
+    "replace-localhost"
   );
 });
 
@@ -279,7 +264,8 @@ gulp.task("copy-win-x64", async function (callback) {
     "copy-files",
     "copy-sscms-win",
     "copy-css",
-    "copy-js"
+    "copy-js",
+    "replace-localhost"
   );
 });
 
@@ -291,12 +277,9 @@ gulp.task("copy-win-x86", async function (callback) {
     "copy-files",
     "copy-sscms-win",
     "copy-css",
-    "copy-js"
+    "copy-js",
+    "replace-localhost"
   );
-});
-
-gulp.task("publish-osx-x64-zip", async function () {
-  writeOss(process.env.OSS_BUCKET_DL, `cms/${version}/sscms-${version}-osx-x64.zip`, `sscms-${version}-osx-x64.zip`);
 });
 
 gulp.task("publish-linux-x64-tgz", async function () {
