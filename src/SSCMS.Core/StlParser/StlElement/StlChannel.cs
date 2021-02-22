@@ -4,7 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Datory;
 using SSCMS.Configuration;
-using SSCMS.Core.StlParser.Model;
+using SSCMS.Core.StlParser.Attributes;
 using SSCMS.Core.StlParser.Utility;
 using SSCMS.Core.Utils;
 using SSCMS.Enums;
@@ -15,13 +15,15 @@ using SSCMS.Utils;
 namespace SSCMS.Core.StlParser.StlElement
 {
     [StlElement(Title = "获取栏目值", Description = "通过 stl:channel 标签在模板中显示指定栏目的属性值")]
-    public class StlChannel
+    public static class StlChannel
     {
-        private StlChannel() { }
         public const string ElementName = "stl:channel";
 
         [StlAttribute(Title = "栏目索引")]
         private const string ChannelIndex = nameof(ChannelIndex);
+
+        [StlAttribute(Title = "栏目索引")]
+        private const string Index = nameof(Index);
 
         [StlAttribute(Title = "栏目名称")]
         private const string ChannelName = nameof(ChannelName);
@@ -111,7 +113,7 @@ namespace SSCMS.Core.StlParser.StlElement
             {
                 var value = parseManager.ContextInfo.Attributes[name];
 
-                if (StringUtils.EqualsIgnoreCase(name, ChannelIndex))
+                if (StringUtils.EqualsIgnoreCase(name, ChannelIndex) || StringUtils.EqualsIgnoreCase(name, Index))
                 {
                     channelIndex = await parseManager.ReplaceStlEntitiesForAttributeValueAsync(value);
                 }
@@ -205,9 +207,9 @@ namespace SSCMS.Core.StlParser.StlElement
             }
 
             var dataManager = new StlDataManager(parseManager.DatabaseManager);
-            var channelId = await dataManager.GetChannelIdByLevelAsync(parseManager.PageInfo.SiteId, parseManager.ContextInfo.ChannelId, upLevel, topLevel);
+            //var channelId = await dataManager.GetChannelIdByLevelAsync(parseManager.PageInfo.SiteId, parseManager.ContextInfo.ChannelId, upLevel, topLevel);
 
-            channelId = await parseManager.DatabaseManager.ChannelRepository.GetChannelIdAsync(parseManager.PageInfo.SiteId, channelId, channelIndex, channelName);
+            var channelId = await parseManager.DatabaseManager.ChannelRepository.GetChannelIdAsync(parseManager.PageInfo.SiteId, parseManager.ContextInfo.ChannelId, channelIndex, channelName);
 
             if (StringUtils.StartsWithIgnoreCase(type, "up") && type.IndexOf(".", StringComparison.Ordinal) != -1)
             {
@@ -245,7 +247,7 @@ namespace SSCMS.Core.StlParser.StlElement
                 return channel.ToDictionary();
             }
 
-            var parsedContent = await ParseImplAsync(parseManager, leftText, rightText, type, formatString, no, separator, startIndex, length, wordNum, ellipsis, replace, to, isClearTags, isReturnToBr, isLower, isUpper, channel, channelId, attributes);
+            var parsedContent = await ParseAsync(parseManager, leftText, rightText, type, formatString, no, separator, startIndex, length, wordNum, ellipsis, replace, to, isClearTags, isReturnToBr, isLower, isUpper, channel, channelId, attributes);
 
             var innerBuilder = new StringBuilder(parsedContent);
             await parseManager.ParseInnerContentAsync(innerBuilder);
@@ -259,7 +261,7 @@ namespace SSCMS.Core.StlParser.StlElement
             return parsedContent;
         }
 
-        private static async Task<string> ParseImplAsync(IParseManager parseManager, string leftText, string rightText, string type, string formatString, string no, string separator, int startIndex, int length, int wordNum, string ellipsis, string replace, string to, bool isClearTags, bool isReturnToBr, bool isLower, bool isUpper, Channel channel, int channelId, NameValueCollection attributes)
+        private static async Task<string> ParseAsync(IParseManager parseManager, string leftText, string rightText, string type, string formatString, string no, string separator, int startIndex, int length, int wordNum, string ellipsis, string replace, string to, bool isClearTags, bool isReturnToBr, bool isLower, bool isUpper, Channel channel, int channelId, NameValueCollection attributes)
         {
             var databaseManager = parseManager.DatabaseManager;
             var pageInfo = parseManager.PageInfo;
@@ -269,7 +271,7 @@ namespace SSCMS.Core.StlParser.StlElement
             {
                 type = nameof(StlParserUtility.Title);
             }
-            type = StringUtils.ToLower(type);
+            //type = StringUtils.ToLower(type);
 
             var parsedContent = string.Empty;
 
@@ -319,7 +321,7 @@ namespace SSCMS.Core.StlParser.StlElement
             {
                 parsedContent = await parseManager.PathManager.GetChannelUrlAsync(pageInfo.Site, channel, pageInfo.IsLocal);
             }
-            else if (StringUtils.EqualsIgnoreCase(type, nameof(Channel.IndexName)) || StringUtils.EqualsIgnoreCase(type, "ChannelIndex"))
+            else if (StringUtils.EqualsIgnoreCase(type, nameof(Channel.IndexName)) || StringUtils.EqualsIgnoreCase(type, ChannelIndex) || StringUtils.EqualsIgnoreCase(type, Index))
             {
                 parsedContent = channel.IndexName;
 
@@ -400,7 +402,7 @@ namespace SSCMS.Core.StlParser.StlElement
                     }
                 }
             }
-            else if (StringUtils.EqualsIgnoreCase(type, nameof(Channel.Content)))
+            else if (StringUtils.EqualsIgnoreCase(type, nameof(Channel.Content)) || StringUtils.EqualsIgnoreCase(type, "Body"))
             {
                 parsedContent = await parseManager.PathManager.DecodeTextEditorAsync(pageInfo.Site, channel.Content, pageInfo.IsLocal);
 

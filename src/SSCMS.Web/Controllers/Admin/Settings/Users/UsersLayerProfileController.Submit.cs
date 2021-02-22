@@ -1,9 +1,9 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using SSCMS.Configuration;
 using SSCMS.Dto;
 using SSCMS.Models;
 using SSCMS.Utils;
+using SSCMS.Core.Utils;
 
 namespace SSCMS.Web.Controllers.Admin.Settings.Users
 {
@@ -12,7 +12,7 @@ namespace SSCMS.Web.Controllers.Admin.Settings.Users
         [HttpPost, Route(Route)]
         public async Task<ActionResult<BoolResult>> Submit([FromBody] User request)
         {
-            if (!await _authManager.HasAppPermissionsAsync(Types.AppPermissions.SettingsUsers))
+            if (!await _authManager.HasAppPermissionsAsync(MenuUtils.AppPermissions.SettingsUsers))
             {
                 return Unauthorized();
             }
@@ -32,6 +32,16 @@ namespace SSCMS.Web.Controllers.Admin.Settings.Users
                 if (user == null)
                 {
                     return this.Error($"用户添加失败：{errorMessage}");
+                }
+
+                if (!string.IsNullOrEmpty(user.AvatarUrl))
+                {
+                    var fileName = PageUtils.GetFileNameFromUrl(user.AvatarUrl);
+                    var filePath = _pathManager.GetUserUploadPath(0, fileName);
+                    var avatarFilePath = _pathManager.GetUserUploadPath(user.Id, fileName);
+                    FileUtils.CopyFile(filePath, avatarFilePath);
+                    user.AvatarUrl = _pathManager.GetUserUploadUrl(user.Id, fileName);
+                    await _userRepository.UpdateAsync(user);
                 }
 
                 await _authManager.AddAdminLogAsync("添加用户", $"用户:{request.UserName}");

@@ -15,7 +15,7 @@ namespace SSCMS.Web.Controllers.Admin.Settings.Sites
         [HttpPost, Route(Route)]
         public async Task<ActionResult<IntResult>> Submit([FromBody] SubmitRequest request)
         {
-            if (!await _authManager.HasAppPermissionsAsync(Types.AppPermissions.SettingsSitesAdd))
+            if (!await _authManager.HasAppPermissionsAsync(MenuUtils.AppPermissions.SettingsSitesAdd))
             {
                 return Unauthorized();
             }
@@ -139,6 +139,17 @@ namespace SSCMS.Web.Controllers.Admin.Settings.Sites
 
                 caching.SetProcess(request.Guid, "清除系统缓存...");
                 _cacheManager.Clear();
+            }
+            else
+            {
+                var templates = await _templateRepository.GetSummariesAsync(site.Id);
+                foreach (var summary in templates)
+                {
+                    var template = await _templateRepository.GetAsync(summary.Id);
+                    await _pathManager.WriteContentToTemplateFileAsync(site, template, Constants.Html5Empty, _authManager.AdminId);
+                }
+
+                await _createManager.CreateByAllAsync(site.Id);
             }
 
             return new IntResult

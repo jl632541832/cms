@@ -2,11 +2,13 @@
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SSCMS.Core.StlParser.Attributes;
+using SSCMS.Core.StlParser.Mocks;
 using SSCMS.Parse;
-using SSCMS.Core.StlParser.Mock;
-using SSCMS.Core.StlParser.Model;
+using SSCMS.Core.StlParser.Models;
 using SSCMS.Core.StlParser.Utility;
 using SSCMS.Services;
+using SSCMS.Core.StlParser.Enums;
 
 namespace SSCMS.Core.StlParser.StlElement
 {
@@ -14,6 +16,12 @@ namespace SSCMS.Core.StlParser.StlElement
     public class StlSqlContents
     {
         public const string ElementName = "stl:sqlContents";
+
+        [StlAttribute(Title = "数据库类型名称")]
+        public const string DatabaseTypeName = nameof(DatabaseTypeName);
+
+        [StlAttribute(Title = "数据库类型")]
+        public const string DatabaseType = nameof(DatabaseType);
 
         [StlAttribute(Title = "数据库链接字符串名称")]
         public const string ConnectionStringName = nameof(ConnectionStringName);
@@ -27,9 +35,20 @@ namespace SSCMS.Core.StlParser.StlElement
         public static async Task<object> ParseAsync(IParseManager parseManager)
         {
             var listInfo = await ListInfo.GetListInfoAsync(parseManager, ParseType.SqlContent);
-            //var dataSource = StlDataUtility.GetSqlContentsDataSource(listInfo.ConnectionString, listInfo.QueryString, listInfo.StartNum, listInfo.TotalNum, listInfo.Order);
-            var dataSource = GetDataSource(parseManager, listInfo.ConnectionString, listInfo.QueryString, listInfo.StartNum,
-                listInfo.TotalNum, listInfo.Order);
+
+            List<KeyValuePair<int, IDictionary<string, object>>> dataSource = null;
+            if (!string.IsNullOrEmpty(listInfo.QueryString))
+            {
+                dataSource = await parseManager.DatabaseManager.ParserGetSqlDataSourceAsync(listInfo.DatabaseType,
+                    listInfo.ConnectionString, listInfo.QueryString);
+            }
+            else if (listInfo.Query != null)
+            {
+                dataSource = await parseManager.DatabaseManager.ParserGetSqlDataSourceAsync(listInfo.DatabaseType,
+                    listInfo.ConnectionString, listInfo.Query);
+            }
+
+            if (dataSource == null) return string.Empty;
 
             if (parseManager.ContextInfo.IsStlEntity)
             {
@@ -39,20 +58,14 @@ namespace SSCMS.Core.StlParser.StlElement
             return await ParseElementAsync(parseManager, listInfo, dataSource);
         }
 
-        public static List<KeyValuePair<int, Dictionary<string, object>>> GetDataSource(IParseManager parseManager, string connectionString, string queryString, int startNum, int totalNum, string order)
-        {
-            //var sqlString = CacheManager.GetSelectSqlStringByQueryString(connectionString, queryString, startNum, totalNum, order);
-            return parseManager.DatabaseManager.ParserGetSqlDataSource(connectionString, queryString);
-        }
-
-        protected static async Task<string> ParseElementAsync(IParseManager parseManager, ListInfo listInfo, List<KeyValuePair<int, Dictionary<string, object>>> dataSource)
+        internal static async Task<string> ParseElementAsync(IParseManager parseManager, ListInfo listInfo, List<KeyValuePair<int, IDictionary<string, object>>> dataSource)
         {
             var pageInfo = parseManager.PageInfo;
 
             if (dataSource == null || dataSource.Count == 0) return string.Empty;
 
             var builder = new StringBuilder();
-            if (listInfo.Layout == Layout.None)
+            if (listInfo.Layout == ListLayout.None)
             {
                 if (!string.IsNullOrEmpty(listInfo.HeaderTemplate))
                 {
@@ -61,6 +74,7 @@ namespace SSCMS.Core.StlParser.StlElement
 
                 var isAlternative = false;
                 var isSeparator = false;
+                var isSeparatorRepeat = false;
                 if (!string.IsNullOrEmpty(listInfo.AlternatingItemTemplate))
                 {
                     isAlternative = true;
@@ -68,6 +82,10 @@ namespace SSCMS.Core.StlParser.StlElement
                 if (!string.IsNullOrEmpty(listInfo.SeparatorTemplate))
                 {
                     isSeparator = true;
+                }
+                if (!string.IsNullOrEmpty(listInfo.SeparatorRepeatTemplate))
+                {
+                    isSeparatorRepeat = true;
                 }
 
                 for (var i = 0; i < dataSource.Count; i++)
@@ -81,6 +99,11 @@ namespace SSCMS.Core.StlParser.StlElement
                     if (isSeparator && i != dataSource.Count - 1)
                     {
                         builder.Append(listInfo.SeparatorTemplate);
+                    }
+
+                    if (isSeparatorRepeat && (i + 1) % listInfo.SeparatorRepeat == 0 && i != dataSource.Count - 1)
+                    {
+                        builder.Append(listInfo.SeparatorRepeatTemplate);
                     }
                 }
 
@@ -96,67 +119,66 @@ namespace SSCMS.Core.StlParser.StlElement
                 var tableAttributes = listInfo.GetTableAttributes();
                 var cellAttributes = listInfo.GetCellAttributes();
 
-                using (var table = new HtmlTable(builder, tableAttributes))
+                using var table = new HtmlTable(builder, tableAttributes);
+
+                if (!string.IsNullOrEmpty(listInfo.HeaderTemplate))
                 {
-                    if (!string.IsNullOrEmpty(listInfo.HeaderTemplate))
+                    table.StartHead();
+                    using (var tHead = table.AddRow())
                     {
-                        table.StartHead();
-                        using (var tHead = table.AddRow())
-                        {
-                            tHead.AddCell(listInfo.HeaderTemplate, cellAttributes);
-                        }
-                        table.EndHead();
+                        tHead.AddCell(listInfo.HeaderTemplate, cellAttributes);
                     }
+                    table.EndHead();
+                }
 
-                    table.StartBody();
+                table.StartBody();
 
-                    var columns = listInfo.Columns <= 1 ? 1 : listInfo.Columns;
-                    var itemIndex = 0;
+                var columns = listInfo.Columns <= 1 ? 1 : listInfo.Columns;
+                var itemIndex = 0;
 
-                    while (true)
+                while (true)
+                {
+                    using var tr = table.AddRow();
+                    for (var cell = 1; cell <= columns; cell++)
                     {
-                        using var tr = table.AddRow();
-                        for (var cell = 1; cell <= columns; cell++)
+                        var cellHtml = string.Empty;
+                        if (itemIndex < dataSource.Count)
                         {
-                            var cellHtml = string.Empty;
-                            if (itemIndex < dataSource.Count)
-                            {
-                                var dict = dataSource[itemIndex];
+                            var dict = dataSource[itemIndex];
 
-                                pageInfo.SqlItems.Push(dict);
-                                var templateString = isAlternative && itemIndex % 2 == 1
-                                    ? listInfo.AlternatingItemTemplate
-                                    : listInfo.ItemTemplate;
-                                cellHtml = await TemplateUtility.GetSqlContentsTemplateStringAsync(templateString,
-                                    listInfo.SelectedItems, listInfo.SelectedValues, string.Empty, parseManager,
-                                    ParseType.SqlContent);
-                            }
-
-                            tr.AddCell(cellHtml, cellAttributes);
-                            itemIndex++;
+                            pageInfo.SqlItems.Push(dict);
+                            var templateString = isAlternative && itemIndex % 2 == 1
+                                ? listInfo.AlternatingItemTemplate
+                                : listInfo.ItemTemplate;
+                            cellHtml = await TemplateUtility.GetSqlContentsTemplateStringAsync(templateString,
+                                listInfo.SelectedItems, listInfo.SelectedValues, string.Empty, parseManager,
+                                ParseType.SqlContent);
                         }
 
-                        if (itemIndex >= dataSource.Count) break;
+                        tr.AddCell(cellHtml, cellAttributes);
+                        itemIndex++;
                     }
 
-                    table.EndBody();
+                    if (itemIndex >= dataSource.Count) break;
+                }
 
-                    if (!string.IsNullOrEmpty(listInfo.FooterTemplate))
+                table.EndBody();
+
+                if (!string.IsNullOrEmpty(listInfo.FooterTemplate))
+                {
+                    table.StartFoot();
+                    using (var tFoot = table.AddRow())
                     {
-                        table.StartFoot();
-                        using (var tFoot = table.AddRow())
-                        {
-                            tFoot.AddCell(listInfo.FooterTemplate, cellAttributes);
-                        }
-                        table.EndFoot();
+                        tFoot.AddCell(listInfo.FooterTemplate, cellAttributes);
                     }
+                    table.EndFoot();
                 }
             }
 
             return builder.ToString();
         }
 
-        private static object ParseEntity(List<KeyValuePair<int, Dictionary<string, object>>> dataSource)
+        private static object ParseEntity(IEnumerable<KeyValuePair<int, IDictionary<string, object>>> dataSource)
         {
             var list = dataSource.Select(x => x.Value).ToList();
             return list;

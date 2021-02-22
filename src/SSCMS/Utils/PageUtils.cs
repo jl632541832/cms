@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
 using Microsoft.AspNetCore.Http;
+using SSCMS.Configuration;
 
 namespace SSCMS.Utils
 {
@@ -13,7 +14,7 @@ namespace SSCMS.Utils
     {
         public const char SeparatorChar = '/';
         public const string DoubleSeparator = "//";
-        public const string SingleSeparator = "/";
+        public const string Separator = "/";
         public const string UnClickableUrl = "javascript:;";
 
         public static string AddProtocolToUrl(string url)
@@ -98,26 +99,27 @@ namespace SSCMS.Utils
             return string.IsNullOrEmpty(host) ? string.Empty : host.Trim().ToLower();
         }
 
-
-        //public static string HttpContextRootDomain
-        //{
-        //    get
-        //    {
-        //        var url = HttpContext.Current.Request.Url;
-
-        //        if (url.HostNameType != UriHostNameType.Dns) return url.Host;
-
-        //        var match = Regex.Match(url.Host, "([^.]+\\.[^.]{1,3}(\\.[^.]{1,3})?)$");
-        //        return match.Groups[1].Success ? match.Groups[1].Value : null;
-        //    }
-        //}
-
         public static NameValueCollection GetQueryString(string url)
         {
             if (string.IsNullOrEmpty(url) || url.IndexOf("?", StringComparison.Ordinal) == -1) return new NameValueCollection();
 
             var querystring = url.Substring(url.IndexOf("?", StringComparison.Ordinal) + 1);
             return TranslateUtils.ToNameValueCollection(querystring);
+        }
+
+        public static NameValueCollection GetQueryStringFilterSqlAndXss(string url)
+        {
+            if (string.IsNullOrEmpty(url) || url.IndexOf("?", StringComparison.Ordinal) == -1) return new NameValueCollection();
+
+            var attributes = new NameValueCollection();
+
+            var querystring = url.Substring(url.IndexOf("?", StringComparison.Ordinal) + 1);
+            var originals = TranslateUtils.ToNameValueCollection(querystring);
+            foreach (string key in originals.Keys)
+            {
+                attributes[key] = AttackUtils.FilterSqlAndXss(originals[key]);
+            }
+            return attributes;
         }
 
         public static string Combine(params string[] urls)
@@ -436,6 +438,11 @@ namespace SSCMS.Utils
             {
                 list.Add(restriction);
             }
+        }
+
+        public static string GetLocalApiUrl(params string[] paths)
+        {
+            return Combine(Constants.ApiPrefix, Combine(paths));
         }
 
         private class IpList

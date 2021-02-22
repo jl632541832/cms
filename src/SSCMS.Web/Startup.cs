@@ -21,6 +21,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 using Senparc.CO2NET;
@@ -118,9 +119,20 @@ namespace SSCMS.Web
             });
 
             services.AddHealthChecks();
-            services.AddRazorPages()
-                .AddPluginApplicationParts(pluginManager)
-                .SetCompatibilityVersion(CompatibilityVersion.Latest);
+
+            if (_env.IsDevelopment())
+            {
+                services.AddRazorPages()
+                    .AddRazorRuntimeCompilation(_ => { })
+                    .AddPluginApplicationParts(pluginManager)
+                    .SetCompatibilityVersion(CompatibilityVersion.Latest);
+            }
+            else
+            {
+                services.AddRazorPages()
+                    .AddPluginApplicationParts(pluginManager)
+                    .SetCompatibilityVersion(CompatibilityVersion.Latest);
+            }
 
             services.AddCache(settingsManager.Redis.ConnectionString);
             services.AddTaskQueue();
@@ -141,7 +153,8 @@ namespace SSCMS.Web
                 .AddDataAnnotationsLocalization()
                 .AddNewtonsoftJson(options =>
                 {
-                    options.SerializerSettings.DateFormatString = "yyyy-MM-dd HH:mm:ss";
+                    options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+                    options.SerializerSettings.DateFormatString = "yyyy-MM-dd HH:mm";
                     options.SerializerSettings.ContractResolver
                         = new CamelCasePropertyNamesContractResolver();
                     options.SerializerSettings.Converters.Add(new StringEnumConverter());
@@ -196,6 +209,15 @@ namespace SSCMS.Web
             {
                 var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
                 var exception = exceptionHandlerPathFeature.Error;
+
+                try
+                {
+                    errorLogRepository.AddErrorLogAsync(exception).GetAwaiter().GetResult();
+                }
+                catch
+                {
+                    // ignored
+                }
 
                 string result;
                 if (env.IsDevelopment())

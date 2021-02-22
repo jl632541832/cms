@@ -5,6 +5,7 @@ using Datory;
 using Mono.Options;
 using SSCMS.Cli.Abstractions;
 using SSCMS.Cli.Core;
+using SSCMS.Core.Plugins;
 using SSCMS.Plugins;
 using SSCMS.Services;
 using SSCMS.Utils;
@@ -59,6 +60,7 @@ namespace SSCMS.Cli.Jobs
             var entryAssembly = Assembly.GetExecutingAssembly();
             await Console.Out.WriteLineAsync($"Cli location: {entryAssembly.Location}");
             await Console.Out.WriteLineAsync($"Work location: {_settingsManager.ContentRootPath}");
+            await Console.Out.WriteLineAsync($"Api host: {CloudUtils.CloudApiHost}");
 
             var configPath = CliUtils.GetConfigPath(_settingsManager);
             if (FileUtils.IsFileExists(configPath))

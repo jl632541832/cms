@@ -1,7 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Datory;
 using Microsoft.AspNetCore.Mvc;
-using SSCMS.Configuration;
 using SSCMS.Core.Utils;
 using SSCMS.Enums;
 using SSCMS.Utils;
@@ -14,7 +13,7 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Channels
         public async Task<ActionResult<ChannelResult>> Get(int siteId, int channelId)
         {
             if (!await _authManager.HasSitePermissionsAsync(siteId,
-                    Types.SitePermissions.Channels))
+                    MenuUtils.SitePermissions.Channels))
             {
                 return Unauthorized();
             }
@@ -53,9 +52,9 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Channels
                 }
             }
 
-            var filePath = string.IsNullOrEmpty(channel.FilePath) ? await _pathManager.GetInputChannelUrlAsync(site, channel, false) : channel.FilePath;
-            var channelFilePathRule = string.IsNullOrEmpty(channel.ChannelFilePathRule) ? await _pathManager.GetChannelFilePathRuleAsync(site, channelId) : channel.ChannelFilePathRule;
-            var contentFilePathRule = string.IsNullOrEmpty(channel.ContentFilePathRule) ? await _pathManager.GetContentFilePathRuleAsync(site, channelId) : channel.ContentFilePathRule;
+            var filePath = channel.FilePath;
+            var channelFilePathRule = channel.ChannelFilePathRule;
+            var contentFilePathRule = channel.ContentFilePathRule;
 
             return new ChannelResult
             {

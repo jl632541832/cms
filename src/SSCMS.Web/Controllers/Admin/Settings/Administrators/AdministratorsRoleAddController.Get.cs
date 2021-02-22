@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using SSCMS.Configuration;
 using SSCMS.Models;
 using SSCMS.Utils;
+using SSCMS.Core.Utils;
 
 namespace SSCMS.Web.Controllers.Admin.Settings.Administrators
 {
@@ -13,7 +14,7 @@ namespace SSCMS.Web.Controllers.Admin.Settings.Administrators
         [HttpGet, Route(Route)]
         public async Task<ActionResult<GetResult>> Get([FromQuery] GetRequest request)
         {
-            if (!await _authManager.HasAppPermissionsAsync(Types.AppPermissions.SettingsAdministratorsRole))
+            if (!await _authManager.HasAppPermissionsAsync(MenuUtils.AppPermissions.SettingsAdministratorsRole))
             {
                 return Unauthorized();
             }
@@ -52,7 +53,6 @@ namespace SSCMS.Web.Controllers.Admin.Settings.Administrators
             }
 
             var siteList = new List<Site>();
-            var checkedSiteIdList = new List<int>();
             foreach (var permissionSiteId in await _authManager.GetSiteIdsAsync())
             {
                 if (!await _authManager.HasChannelPermissionsAsync(permissionSiteId, permissionSiteId) ||
@@ -67,28 +67,12 @@ namespace SSCMS.Web.Controllers.Admin.Settings.Administrators
                 }
             }
 
-            foreach (var sitePermissions in sitePermissionsList)
-            {
-                checkedSiteIdList.Add(sitePermissions.SiteId);
-            }
-
-            var list = new List<SitePermissionsResult>();
-            foreach (var siteId in checkedSiteIdList)
-            {
-                var result = await GetSitePermissionsObjectAsync(allPermissions, request.RoleId, siteId);
-                if (result != null)
-                {
-                    list.Add(result);
-                }
-            }
-
             return new GetResult
             {
                 Role = role,
                 Permissions = permissions,
                 Sites = siteList,
-                CheckedSiteIds = checkedSiteIdList,
-                SitePermissionsList = list
+                SitePermissions = sitePermissionsList
             };
         }
     }

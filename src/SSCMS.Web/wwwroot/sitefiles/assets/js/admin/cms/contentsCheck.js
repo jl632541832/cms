@@ -184,8 +184,7 @@ var methods = {
     utils.openLayer({
       title: "管理员查看",
       url: utils.getCommonUrl('adminLayerView', {adminId: adminId}),
-      width: 550,
-      height: 450
+      full: true
     });
   },
 
@@ -234,13 +233,13 @@ var methods = {
     });
   },
 
-  btnContentStateClick: function(contentId) {
+  btnContentStateClick: function(content) {
     utils.openLayer({
       title: "查看审核状态",
       url: utils.getCmsUrl('contentsLayerState', {
-        siteId: this.siteId,
-        channelId: this.siteId,
-        contentId: contentId
+        siteId: content.siteId,
+        channelId: content.siteId,
+        contentId: content.id
       }),
       full: true
     });

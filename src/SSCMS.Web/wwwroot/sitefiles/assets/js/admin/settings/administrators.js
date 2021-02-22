@@ -101,7 +101,7 @@ var methods = {
   btnViewClick: function(row) {
     utils.openLayer({
       title: '查看资料',
-      url: utils.getSettingsUrl('administratorsLayerView', {pageType: 'admin', userId: row.id}),
+      url: utils.getCommonUrl('adminLayerView', {adminId: row.id}),
       full: true
     });
   },
@@ -109,7 +109,7 @@ var methods = {
   btnEditClick: function(row) {
     utils.openLayer({
       title: '编辑资料',
-      url: utils.getSettingsUrl('administratorsLayerProfile', {pageType: 'admin', userId: row.id}),
+      url: utils.getSettingsUrl('administratorsLayerProfile', {userName: row.userName}),
       full: true
     });
   },
@@ -117,7 +117,7 @@ var methods = {
   btnPasswordClick: function(row) {
     utils.openLayer({
       title: '更改密码',
-      url: utils.getSettingsUrl('administratorsLayerPassword', {pageType: 'admin', userId: row.id}),
+      url: utils.getSettingsUrl('administratorsLayerPassword', {userName: row.userName}),
       full: true
     });
   },
@@ -238,6 +238,8 @@ var methods = {
   },
 
   btnExportClick: function() {
+    var $this = this;
+    
     utils.loading(this, true);
     $api.post($urlExport).then(function (response) {
       var res = response.data;
@@ -260,7 +262,7 @@ var methods = {
   btnAddClick: function () {
     utils.openLayer({
       title: '新增管理员',
-      url: utils.getSettingsUrl('administratorsLayerProfile', {pageType: 'admin'}),
+      url: utils.getSettingsUrl('administratorsLayerProfile'),
       full: true
     });
   },

@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Datory;
 using SSCMS.Core.Services;
@@ -26,24 +25,46 @@ namespace SSCMS.Core.Repositories
 
         public async Task InsertAsync(SitePermissions permissions)
         {
+            if (await Exists(permissions.RoleName, permissions.SiteId))
+            {
+                await DeleteAsync(permissions.RoleName, permissions.SiteId);
+            }
             await _repository.InsertAsync(permissions);
         }
 
         public async Task DeleteAsync(string roleName)
         {
-            await _repository.DeleteAsync(Q.Where(nameof(SitePermissions.RoleName), roleName));
+            await _repository.DeleteAsync(Q
+                .Where(nameof(SitePermissions.RoleName), roleName)
+            );
+        }
+
+        public async Task DeleteAsync(string roleName, int siteId)
+        {
+            await _repository.DeleteAsync(Q
+                .Where(nameof(SitePermissions.RoleName), roleName)
+                .Where(nameof(SitePermissions.SiteId), siteId)
+            );
         }
 
         public async Task<List<SitePermissions>> GetAllAsync(string roleName)
         {
-            var permissionsList = await _repository.GetAllAsync(Q.Where(nameof(SitePermissions.RoleName), roleName));
-
-            return permissionsList.ToList();
+            return await _repository.GetAllAsync(Q
+                .Where(nameof(SitePermissions.RoleName), roleName)
+            );
         }
 
         public async Task<SitePermissions> GetAsync(string roleName, int siteId)
         {
             return await _repository.GetAsync(Q
+                .Where(nameof(SitePermissions.RoleName), roleName)
+                .Where(nameof(SitePermissions.SiteId), siteId)
+            );
+        }
+
+        public async Task<bool> Exists(string roleName, int siteId)
+        {
+            return await _repository.ExistsAsync(Q
                 .Where(nameof(SitePermissions.RoleName), roleName)
                 .Where(nameof(SitePermissions.SiteId), siteId)
             );
@@ -66,7 +87,20 @@ namespace SSCMS.Core.Repositories
                     {
                         if (!list.Contains(websitePermission)) list.Add(websitePermission);
                     }
-                    sortedList[systemPermissions.SiteId] = list;
+
+                    if (sortedList.ContainsKey(systemPermissions.SiteId))
+                    {
+                        var permissions = sortedList[systemPermissions.SiteId];
+                        foreach (var item in list)
+                        {
+                            if (!permissions.Contains(item)) permissions.Add(item);
+                        }
+                        sortedList[systemPermissions.SiteId] = permissions;
+                    }
+                    else
+                    {
+                        sortedList[systemPermissions.SiteId] = list;
+                    }
                 }
             }
 

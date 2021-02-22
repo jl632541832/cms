@@ -96,13 +96,7 @@ var methods = {
         location.href = res.redirectUrl;
       }
     }).catch(function (error) {
-      if (error.response && error.response.status === 400) {
-        utils.error(error, {redirect: true});
-      } else if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-        location.href = utils.getRootUrl('login');
-      } else if (error.response && error.response.status === 500) {
-        utils.error(error);
-      }
+      utils.error(error);
     });
   },
 
@@ -334,13 +328,13 @@ var methods = {
     } else if (command === 'profile') {
       utils.openLayer({
         title: '修改资料',
-        url: utils.getSettingsUrl('administratorsLayerProfile', {pageType: 'user', userId: this.local.userId}),
+        url: utils.getSettingsUrl('administratorsLayerProfile', {userName: this.local.userName}),
         full: true
       });
     } else if (command === 'password') {
       utils.openLayer({
         title: '更改密码',
-        url: utils.getSettingsUrl('administratorsLayerPassword', {pageType: 'user', userId: this.local.userId}),
+        url: utils.getSettingsUrl('administratorsLayerPassword', {userName: this.local.userName}),
         full: true
       });
     } else if (command === 'logout') {

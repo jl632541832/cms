@@ -1,10 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using SSCMS.Core.StlParser.Attributes;
 using SSCMS.Parse;
-using SSCMS.Core.StlParser.Model;
 using SSCMS.Core.StlParser.Utility;
 using SSCMS.Core.Utils;
+using SSCMS.Enums;
 using SSCMS.Services;
 using SSCMS.Utils;
 
@@ -17,6 +18,9 @@ namespace SSCMS.Core.StlParser.StlElement
 
         [StlAttribute(Title = "栏目索引")]
         private const string ChannelIndex = nameof(ChannelIndex);
+
+        [StlAttribute(Title = "栏目索引")]
+        private const string Index = nameof(Index);
 
         [StlAttribute(Title = "栏目名称")]
         private const string ChannelName = nameof(ChannelName);
@@ -57,7 +61,7 @@ namespace SSCMS.Core.StlParser.StlElement
             foreach (var name in parseManager.ContextInfo.Attributes.AllKeys)
             {
                 var value = parseManager.ContextInfo.Attributes[name];
-                if (StringUtils.EqualsIgnoreCase(name, ChannelIndex))
+                if (StringUtils.EqualsIgnoreCase(name, ChannelIndex) || StringUtils.EqualsIgnoreCase(name, Index))
                 {
                     channelIndex = await parseManager.ReplaceStlEntitiesForAttributeValueAsync(value);
                     if (!string.IsNullOrEmpty(channelIndex))
@@ -119,13 +123,11 @@ namespace SSCMS.Core.StlParser.StlElement
                 }
             }
 
-            var parsedContent = await ParseImplAsync(parseManager, channelIndex, channelName, upLevel, topLevel,
+            return await ParseAsync(parseManager, channelIndex, channelName, upLevel, topLevel,
                 removeTarget, href, queryString, host, attributes);
-
-            return parsedContent;
         }
 
-        private static async Task<string> ParseImplAsync(IParseManager parseManager, string channelIndex,
+        private static async Task<string> ParseAsync(IParseManager parseManager, string channelIndex,
             string channelName, int upLevel, int topLevel, bool removeTarget, string href, string queryString,
             string host, Dictionary<string, string> attributes)
         {
@@ -255,6 +257,16 @@ namespace SSCMS.Core.StlParser.StlElement
             if (contextInfo.IsStlEntity)
             {
                 return url;
+            }
+
+            if (pageInfo.EditMode == EditMode.Visual)
+            {
+                var editable = VisualUtility.GetEditable(pageInfo, contextInfo);
+                var editableAttributes = VisualUtility.GetEditableAttributes(editable);
+                foreach (var key in editableAttributes.AllKeys)
+                {
+                    attributes[key] = editableAttributes[key];
+                }
             }
 
             return $@"<a {TranslateUtils.ToAttributesString(attributes)}>{innerHtml}</a>";

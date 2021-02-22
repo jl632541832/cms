@@ -1,9 +1,9 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using SSCMS.Configuration;
 using SSCMS.Dto;
 using SSCMS.Models;
 using SSCMS.Utils;
+using SSCMS.Core.Utils;
 
 namespace SSCMS.Web.Controllers.Admin.Settings.Administrators
 {
@@ -16,7 +16,7 @@ namespace SSCMS.Web.Controllers.Admin.Settings.Administrators
 
             var adminId = _authManager.AdminId;
             if (adminId != userId &&
-                !await _authManager.HasAppPermissionsAsync(Types.AppPermissions.SettingsAdministrators))
+                !await _authManager.HasAppPermissionsAsync(MenuUtils.AppPermissions.SettingsAdministrators))
             {
                 return Unauthorized();
             }
@@ -75,6 +75,17 @@ namespace SSCMS.Web.Controllers.Admin.Settings.Administrators
                 {
                     return this.Error($"管理员添加失败：{errorMessage}");
                 }
+
+                if (!string.IsNullOrEmpty(administrator.AvatarUrl))
+                {
+                    var fileName = PageUtils.GetFileNameFromUrl(administrator.AvatarUrl);
+                    var filePath = _pathManager.GetAdministratorUploadPath(0, fileName);
+                    var avatarFilePath = _pathManager.GetAdministratorUploadPath(administrator.Id, fileName);
+                    FileUtils.CopyFile(filePath, avatarFilePath);
+                    administrator.AvatarUrl = _pathManager.GetAdministratorUploadUrl(administrator.Id, fileName);
+                    await _administratorRepository.UpdateAsync(administrator);
+                }
+
                 await _authManager.AddAdminLogAsync("添加管理员", $"管理员:{administrator.UserName}");
             }
             else

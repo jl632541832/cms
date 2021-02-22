@@ -37,8 +37,6 @@ namespace SSCMS.Web.Controllers.Home
                 return this.Error($"更改密码失败：{errorMessage}");
             }
 
-            await _authManager.AddAdminLogAsync("重设用户密码", $"用户:{user.UserName}");
-
             return new BoolResult
             {
                 Value = true

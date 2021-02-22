@@ -82,9 +82,10 @@ var methods = {
   },
 
   insertEditor: function(attributeName, html) {
-    if (!attributeName) attributeName = 'Body';
+    // if (!attributeName) attributeName = 'Body';
     if (!html) return;
-    UE.getEditor(attributeName, {allowDivTransToP: false, maximumWords:99999999}).execCommand('insertHTML', html);
+    this.editEditor.txt.html(html);
+    //utils.getEditor(attributeName).execCommand('insertHTML', html);
   },
   
   setRuleText: function(rule, isChannel) {
@@ -358,16 +359,12 @@ var methods = {
     return template;
   },
 
-  btnTemplateEditClick: function(isChannel, templateId) {
-    if (!this.isTemplateEditable) return;
-
-    var template = this.getTemplate(isChannel, templateId);
-    
-    utils.addTab('编辑:' + template.templateName, utils.getCmsUrl('templatesEditor', {
+  getTemplateEditorUrl: function(isChannel, templateId) {
+    return utils.getCmsUrl('templatesEditor', {
       siteId: this.siteId,
-      templateId: template.id,
+      templateId: templateId,
       templateType: isChannel ? 'ChannelTemplate' : 'ContentTemplate',
-    }));
+    });
   },
 
   btnEditAddGroupClick: function() {
@@ -401,6 +398,15 @@ var methods = {
 
   handleCheckChange() {
     this.channelIds = this.$refs.tree.getCheckedKeys();
+  },
+
+  btnCheckClick: function(row) {
+    if (this.channelIds.indexOf(row.value) !== -1) {
+      this.channelIds.splice(this.channelIds.indexOf(row.value), 1);
+    } else {
+      this.channelIds.push(row.value);
+    }
+    this.$refs.tree.setCheckedKeys(this.channelIds);
   },
 
   filterNode: function(value, data) {
@@ -624,6 +630,9 @@ var methods = {
 
     if (options.attributeName) {
       query.attributeName = options.attributeName;
+    }
+    if (options.no) {
+      query.no = options.no;
     }
     if (options.contentId) {
       query.contentId = options.contentId;
