@@ -1,6 +1,5 @@
-﻿using System.IO;
-using System.Linq;
-using RestSharp;
+﻿using System.Linq;
+using SSCMS.Core.Utils;
 using SSCMS.Services;
 using SSCMS.Utils;
 
@@ -26,14 +25,6 @@ namespace SSCMS.Core.Plugins
             public static string GetThemeUrl(string userName, string name)
             {
                 return PageUtils.Combine(Host, $"/templates/template.html?userName={userName}&name={name}");
-            }
-        }
-
-        public static class Api
-        {
-            public static string GetCliUrl(string relatedUrl)
-            {
-                return PageUtils.Combine(CloudApiHost, "v7/cli", relatedUrl);
             }
         }
 
@@ -76,23 +67,26 @@ namespace SSCMS.Core.Plugins
                 DirectoryUtils.CreateDirectoryIfNotExists(directoryPath);
 
                 var filePath = PathUtils.Combine(packagesPath, $"{GetCmsDownloadName(osArchitecture, version)}.zip");
-                FileUtils.WriteText(filePath, string.Empty);
-                using (var writer = File.OpenWrite(filePath))
-                {
-                    var client = new RestClient(GetCmsDownloadUrl(osArchitecture, version));
-                    var request = new RestRequest
-                    {
-                        ResponseWriter = responseStream =>
-                        {
-                            using (responseStream)
-                            {
-                                responseStream.CopyTo(writer);
-                            }
-                        }
-                    };
 
-                    client.DownloadData(request);
-                }
+                var url = GetCmsDownloadUrl(osArchitecture, version);
+                RestUtils.Download(url, filePath);
+                //FileUtils.WriteText(filePath, string.Empty);
+                //using (var writer = File.OpenWrite(filePath))
+                //{
+                //    var client = new RestClient(GetCmsDownloadUrl(osArchitecture, version));
+                //    var request = new RestRequest
+                //    {
+                //        ResponseWriter = responseStream =>
+                //        {
+                //            using (responseStream)
+                //            {
+                //                responseStream.CopyTo(writer);
+                //            }
+                //        }
+                //    };
+
+                //    client.DownloadData(request);
+                //}
 
                 pathManager.ExtractZip(filePath, directoryPath);
 
@@ -120,20 +114,23 @@ namespace SSCMS.Core.Plugins
                     DirectoryUtils.DeleteDirectoryIfExists(PathUtils.Combine(packagesPath, directoryName));
                 }
 
-                FileUtils.WriteText(filePath, string.Empty);
-                using (var writer = File.OpenWrite(filePath))
-                {
-                    var client = new RestClient(GetExtensionsDownloadUrl(userName, name, version));
-                    var request = new RestRequest();
-                    request.ResponseWriter = responseStream =>
-                    {
-                        using (responseStream)
-                        {
-                            responseStream.CopyTo(writer);
-                        }
-                    };
-                    client.DownloadData(request);
-                }
+                var url = GetExtensionsDownloadUrl(userName, name, version);
+                RestUtils.Download(url, filePath);
+
+                //FileUtils.WriteText(filePath, string.Empty);
+                //using (var writer = File.OpenWrite(filePath))
+                //{
+                //    var client = new RestClient(GetExtensionsDownloadUrl(userName, name, version));
+                //    var request = new RestRequest();
+                //    request.ResponseWriter = responseStream =>
+                //    {
+                //        using (responseStream)
+                //        {
+                //            responseStream.CopyTo(writer);
+                //        }
+                //    };
+                //    client.DownloadData(request);
+                //}
 
                 //var repo = PackageRepositoryFactory.Default.CreateRepository(WebConfigUtils.IsNightlyUpdate
                 //? MyGetPackageSource

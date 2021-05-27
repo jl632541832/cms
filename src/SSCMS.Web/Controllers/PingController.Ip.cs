@@ -1,18 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using RestSharp;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using SSCMS.Core.Utils;
 
 namespace SSCMS.Web.Controllers
 {
     public partial class PingController
     {
         [HttpGet, Route(RouteIp)]
-        public string Ip()
+        public async Task<string> Ip()
         {
-            var client = new RestClient("https://api.open.21ds.cn/apiv1/iptest?apkey=iptest") { Timeout = -1 };
-            var request = new RestRequest(Method.GET);
-
-            var response = client.Execute(request);
-            return response.Content;
+            return await RestUtils.GetIpAddressAsync();
         }
     }
 }

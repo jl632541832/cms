@@ -12,7 +12,8 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Channels
         [HttpPut, Route(Route)]
         public async Task<ActionResult<List<int>>> Edit([FromBody] PutRequest request)
         {
-            if (!await _authManager.HasChannelPermissionsAsync(request.SiteId, request.Id, MenuUtils.ChannelPermissions.Edit))
+            if (!await _authManager.HasSitePermissionsAsync(request.SiteId,
+                    MenuUtils.SitePermissions.Channels))
             {
                 return Unauthorized();
             }
@@ -116,7 +117,7 @@ namespace SSCMS.Web.Controllers.Admin.Cms.Channels
             channel.ChannelName = request.ChannelName;
             channel.IndexName = request.IndexName;
             channel.GroupNames = request.GroupNames;
-            channel.Content = request.Content;
+            //channel.Content = request.Content;
             channel.ChannelTemplateId = request.ChannelTemplateId;
             channel.ContentTemplateId = request.ContentTemplateId;
             channel.LinkUrl = request.LinkUrl;

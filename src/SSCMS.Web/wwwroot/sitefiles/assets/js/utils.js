@@ -82,8 +82,9 @@ var utils = {
       allowDivTransToP: false,
       maximumWords: 99999999,
       initialFrameWidth:null ,
-      autoHeightEnabled: true,
-      autoFloatEnabled: false
+      autoHeightEnabled: false,
+      autoFloatEnabled: false,
+      zIndex: 2001,
     });
   },
 
@@ -112,15 +113,19 @@ var utils = {
     return parseInt(val, 10) || 0;
   },
 
+  toArray: function (val) {
+    return (val || '').split(',');
+  },
+
   formatDate: function(date) {
     var d = new Date(date),
         month = '' + (d.getMonth() + 1),
         day = '' + d.getDate(),
         year = d.getFullYear();
 
-    if (month.length < 2) 
+    if (month.length < 2)
         month = '0' + month;
-    if (day.length < 2) 
+    if (day.length < 2)
         day = '0' + day;
 
     return [year, month, day].join('-');
@@ -264,7 +269,7 @@ var utils = {
     var index = $this.tabs.findIndex(function(tab) {
       return tab.url == url;
     });
-    
+
     var tab = null;
     if (index === -1) {
       tab = {
@@ -286,7 +291,7 @@ var utils = {
     if (!name) {
       name = $this.tabName;
     }
-    
+
     if ($this.tabName === name) {
       $this.activeChildMenu = null;
       $this.tabs.forEach(function(tab, index) {
@@ -298,7 +303,7 @@ var utils = {
         }
       });
     }
-    
+
     $this.tabs = $this.tabs.filter(function(tab) {
       return tab.name !== name;
     });
@@ -456,10 +461,32 @@ var utils = {
   error: function (error, options) {
     if (!error) return;
 
-    if (error.response) {
+    if (typeof error === 'string') {
+      if (options && options.redirect) {
+        var uuid = utils.uuid();
+        sessionStorage.setItem(uuid, JSON.stringify({
+          message: error
+        }));
+
+        top.location.href = utils.getRootUrl("error", { uuid: uuid });
+      } else {
+        utils.getRootVue().$message({
+          type: "error",
+          message: error,
+          showIcon: true
+        });
+      }
+    } else if (error.response) {
       var message = utils.getErrorMessage(error);
 
-      if (error.response && error.response.status === 500 || options && options.redirect) {
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+        var location = _.trimEnd(window.location.href, '/');
+        if (_.endsWith(location, '/ss-admin') || _.endsWith(location, '/home')) {
+          top.location.href = utils.getRootUrl('login');
+        } else {
+          top.location.href = utils.getRootUrl('login', {status: 401});
+        }
+      } else if (error.response && error.response.status === 500 || options && options.redirect) {
         var uuid = utils.uuid();
 
         if (typeof message === 'string') {
@@ -469,22 +496,24 @@ var utils = {
         } else {
           sessionStorage.setItem(uuid, message);
         }
-  
+
         if (options && options.redirect) {
-          location.href = utils.getRootUrl("error", { uuid: uuid })
+          top.location.href = utils.getRootUrl("error", { uuid: uuid })
           return;
         }
-  
+
         top.utils.openLayer({
           url: utils.getRootUrl("error", { uuid: uuid }),
         });
         return;
-      } else if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-        var location = _.trimEnd(window.location.href, '/');
-        if (_.endsWith(location, '/ss-admin') || _.endsWith(location, '/home')) {
-          top.location.href = utils.getRootUrl('login');
-        } else {
-          top.location.href = utils.getRootUrl('login', {status: 401});
+      } else if (error.response && error.response.status === 400) {
+        if (options && options.redirect) {
+          var uuid = utils.uuid();
+          sessionStorage.setItem(uuid, JSON.stringify({
+            message: error
+          }));
+
+          top.location.href = utils.getRootUrl("error", { uuid: uuid });
         }
       }
 
@@ -493,21 +522,6 @@ var utils = {
         message: message,
         showIcon: true
       });
-    } else if (typeof error === 'string') {
-      if (options && options.redirect) {
-        var uuid = utils.uuid();
-        sessionStorage.setItem(uuid, JSON.stringify({
-          message: error
-        }));
-  
-        location.href = utils.getRootUrl("error", { uuid: uuid });
-      } else {
-        utils.getRootVue().$message({
-          type: "error",
-          message: error,
-          showIcon: true
-        });
-      }
     } else if (typeof error === 'object') {
       utils.getRootVue().$message({
         type: "error",
@@ -593,6 +607,31 @@ var utils = {
     }
   },
 
+  validateMax: function (rule, value, callback) {
+    if (value && value.length > parseInt(rule.value)) {
+      callback(new Error(rule.message || '字段不能超过指定的长度'));
+    } else {
+      callback()
+    }
+  },
+
+  validateMin: function (rule, value, callback) {
+    if (value && value.length < parseInt(rule.value)) {
+      callback(new Error(rule.message || '字段不能低于指定的长度'));
+    } else {
+      callback()
+    }
+  },
+
+  validateIdCard: function (rule, value, callback) {
+    var reg = /(^\d{15}$)|(^\d{17}(\d|X|x)$)/;
+    if (!value || !reg.test(value)) {
+      callback(new Error(rule.message || '字段必须是身份证号码'));
+    } else {
+      callback()
+    }
+  },
+
   validateInt: function (rule, value, callback) {
     if (!value) {
       callback();
@@ -666,9 +705,9 @@ var utils = {
             message: rule.message || options.required,
           });
         } else if (ruleType === "email") {
-          array.push({ 
-            type: "email", 
-            message: rule.message || options.email 
+          array.push({
+            type: "email",
+            message: rule.message || options.email
           });
         } else if (ruleType === "mobile") {
           array.push({
@@ -676,13 +715,13 @@ var utils = {
             message: rule.message || options.mobile
           });
         } else if (ruleType === "url") {
-          array.push({ 
-            type: "url", 
+          array.push({
+            type: "url",
             message: rule.message || options.url
           });
         } else if (ruleType === "alpha") {
-          array.push({ 
-            type: "alpha", 
+          array.push({
+            type: "alpha",
             message: rule.message || options.alpha
           });
         } else if (ruleType === "alphaDash") {
@@ -731,9 +770,10 @@ var utils = {
             message: rule.message || options.excluded,
           });
         } else if (ruleType === "max") {
-          array.push({ 
-            type: "max", 
-            message: rule.message || options.max
+          array.push({
+            validator: utils.validateMax,
+            message: rule.message || options.mobile,
+            value: rule.value
           });
         } else if (ruleType === "maxValue") {
           array.push({
@@ -741,9 +781,10 @@ var utils = {
             message: rule.message || options.maxValue,
           });
         } else if (ruleType === "min") {
-          array.push({ 
-            type: "min", 
-            message: rule.message || options.min 
+          array.push({
+            validator: utils.validateMin,
+            message: rule.message || options.mobile,
+            value: rule.value
           });
         } else if (ruleType === "minValue") {
           array.push({
@@ -753,7 +794,7 @@ var utils = {
         } else if (ruleType === "regex" && rule.value) {
           var re = new RegExp(rule.value, "ig");
           var message = rule.message || options.regex;
-          array.push({ 
+          array.push({
             validator: function (rule, value, callback) {
               if (!value){
                 callback();
@@ -776,17 +817,18 @@ var utils = {
             message: rule.message || options.currency,
           });
         } else if (ruleType === "zip") {
-          array.push({ 
-            type: "zip", 
+          array.push({
+            type: "zip",
             message: rule.message || options.zip
           });
         } else if (ruleType === "idCard") {
           array.push({
-            type: "idCard",
+            validator: utils.validateIdCard,
             message: rule.message || options.idCard,
           });
         }
       }
+
       return array;
     }
     return null;

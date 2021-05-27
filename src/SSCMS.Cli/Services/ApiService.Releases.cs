@@ -1,10 +1,12 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using SSCMS.Core.Utils;
 
 namespace SSCMS.Cli.Services
 {
     public partial class ApiService
     {
-        public (bool success, GetReleasesResult result, string failureMessage) GetReleases(string version, List<string> pluginIds)
+        public async Task<(bool success, GetReleasesResult result, string failureMessage)> GetReleasesAsync(string version, List<string> pluginIds)
         {
             //var client = new RestClient(CloudUtils.Api.GetCliUrl(RestUrlReleases)) { Timeout = -1 };
             //var request = new RestRequest(Method.POST);
@@ -32,7 +34,8 @@ namespace SSCMS.Cli.Services
 
             //return (true, response.Data, null);
 
-            return ExecutePost<GetReleasesRequest, GetReleasesResult>(RestUrlReleases, new GetReleasesRequest
+            var url = GetCliUrl(RestUrlReleases);
+            return await RestUtils.PostAsync<GetReleasesRequest, GetReleasesResult>(url, new GetReleasesRequest
             {
                 Version = version,
                 PluginIds = pluginIds
